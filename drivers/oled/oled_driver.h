@@ -23,6 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OLED_IC_SSD1306 0
 #define OLED_IC_SH1106 1
 
+#if !defined(NUM_OLEDS)
+# define NUM_OLEDS 0
+#endif
+
 #if defined(OLED_DISPLAY_CUSTOM)
 // Expected user to implement the necessary defines
 #elif defined(OLED_DISPLAY_128X64)
@@ -171,140 +175,180 @@ typedef enum {
     OLED_ROTATION_270 = 3,  // OLED_ROTATION_90 | OLED_ROTATION_180
 } oled_rotation_t;
 
+typedef struct Oled {
+  uint8_t         address;
+  uint8_t         buffer[OLED_MATRIX_SIZE];
+  uint8_t *       cursor;
+  OLED_BLOCK_TYPE dirty;
+  bool            initialized;
+  bool            active;
+  bool            scrolling;
+  uint8_t         brightness;
+  uint8_t         rotation;
+  uint8_t         rotation_width;
+  uint8_t         scroll_speed;  // this holds the speed after being remapped to ssd1306 internal values
+  uint8_t         scroll_start;
+  uint8_t         scroll_end;
+  #if OLED_TIMEOUT > 0
+  uint32_t timeout;
+  #endif
+  #if OLED_SCROLL_TIMEOUT > 0
+  uint32_t oled_scroll_timeout;
+  #endif
+} Oled;
+
+// Oled* new_Oled(uint8_t address) {
+//   Oled *oled = malloc(sizeof(Oled));
+//   oled->address = address;
+//   oled->dirty          = 0;
+//   oled->initialized    = false;
+//   oled->active         = false;
+//   oled->scrolling      = false;
+//   oled->brightness     = OLED_BRIGHTNESS;
+//   oled->rotation       = 0;
+//   oled->rotation_width = 0;
+//   oled->scroll_speed   = 0;  // this holds the speed after being remapped to ssd1306 internal values
+//   oled->scroll_start   = 0;
+//   oled->scroll_end     = 7;
+//   return oled;
+// }
+
 // Initialize the oled display, rotating the rendered output based on the define passed in.
 // Returns true if the OLED was initialized successfully
-bool oled_init(oled_rotation_t rotation);
+bool oled_init(oled_rotation_t rotation, Oled *oled);
 
 // Called at the start of oled_init, weak function overridable by the user
 // rotation - the value passed into oled_init
 // Return new oled_rotation_t if you want to override default rotation
-oled_rotation_t oled_init_user(oled_rotation_t rotation);
+oled_rotation_t oled_init_user(oled_rotation_t rotation, Oled *oled);
 
 // Clears the display buffer, resets cursor position to 0, and sets the buffer to dirty for rendering
-void oled_clear(void);
+void oled_clear(Oled *oled);
 
 // Renders the dirty chunks of the buffer to oled display
-void oled_render(void);
+void oled_render(Oled *oled);
 
 // Moves cursor to character position indicated by column and line, wraps if out of bounds
 // Max column denoted by 'oled_max_chars()' and max lines by 'oled_max_lines()' functions
-void oled_set_cursor(uint8_t col, uint8_t line);
+void oled_set_cursor(uint8_t col, uint8_t line, Oled *oled);
 
 // Advances the cursor to the next page, writing ' ' if true
 // Wraps to the begining when out of bounds
-void oled_advance_page(bool clearPageRemainder);
+void oled_advance_page(bool clearPageRemainder, Oled *oled);
 
 // Moves the cursor forward 1 character length
 // Advance page if there is not enough room for the next character
 // Wraps to the begining when out of bounds
-void oled_advance_char(void);
+void oled_advance_char(Oled *oled);
 
 // Writes a single character to the buffer at current cursor position
 // Advances the cursor while writing, inverts the pixels if true
 // Main handler that writes character data to the display buffer
-void oled_write_char(const char data, bool invert);
+void oled_write_char(const char data, bool invert, Oled *oled);
 
 // Writes a string to the buffer at current cursor position
 // Advances the cursor while writing, inverts the pixels if true
-void oled_write(const char *data, bool invert);
+void oled_write(const char *data, bool invert, Oled *oled);
 
 // Writes a string to the buffer at current cursor position
 // Advances the cursor while writing, inverts the pixels if true
 // Advances the cursor to the next page, wiring ' ' to the remainder of the current page
-void oled_write_ln(const char *data, bool invert);
+void oled_write_ln(const char *data, bool invert, Oled *oled);
 
 // Pans the buffer to the right (or left by passing true) by moving contents of the buffer
-void oled_pan(bool left);
+void oled_pan(bool left, Oled *oled);
 
 // Returns a pointer to the requested start index in the buffer plus remaining
 // buffer length as struct
-oled_buffer_reader_t oled_read_raw(uint16_t start_index);
+oled_buffer_reader_t oled_read_raw(uint16_t start_index, Oled *oled);
 
-void oled_write_raw(const char *data, uint16_t size);
-void oled_write_raw_byte(const char data, uint16_t index);
+void oled_write_raw(const char *data, uint16_t size, Oled *oled);
+void oled_write_raw_byte(const char data, uint16_t index, Oled *oled);
 
 // Sets a specific pixel on or off
 // Coordinates start at top-left and go right and down for positive x and y
-void oled_write_pixel(uint8_t x, uint8_t y, bool on);
+void oled_write_pixel(uint8_t x, uint8_t y, bool on, Oled *oled);
 
 #if defined(__AVR__)
 // Writes a PROGMEM string to the buffer at current cursor position
 // Advances the cursor while writing, inverts the pixels if true
 // Remapped to call 'void oled_write(const char *data, bool invert);' on ARM
-void oled_write_P(const char *data, bool invert);
+void oled_write_P(const char *data, bool invert, Oled *oled);
 
 // Writes a PROGMEM string to the buffer at current cursor position
 // Advances the cursor while writing, inverts the pixels if true
 // Advances the cursor to the next page, wiring ' ' to the remainder of the current page
 // Remapped to call 'void oled_write_ln(const char *data, bool invert);' on ARM
-void oled_write_ln_P(const char *data, bool invert);
+void oled_write_ln_P(const char *data, bool invert, Oled *oled);
 
-void oled_write_raw_P(const char *data, uint16_t size);
+void oled_write_raw_P(const char *data, uint16_t size, Oled *oled);
 #else
 // Writes a string to the buffer at current cursor position
 // Advances the cursor while writing, inverts the pixels if true
-#    define oled_write_P(data, invert) oled_write(data, invert)
+#    define oled_write_P(data, invert, oled) oled_write(data, invert, oled)
 
 // Writes a string to the buffer at current cursor position
 // Advances the cursor while writing, inverts the pixels if true
 // Advances the cursor to the next page, wiring ' ' to the remainder of the current page
-#    define oled_write_ln_P(data, invert) oled_write(data, invert)
+#    define oled_write_ln_P(data, invert, oled) oled_write(data, invert, oled)
 
-#    define oled_write_raw_P(data, size) oled_write_raw(data, size)
+#    define oled_write_raw_P(data, size, oled) oled_write_raw(data, size, oled)
 #endif  // defined(__AVR__)
 
 // Can be used to manually turn on the screen if it is off
 // Returns true if the screen was on or turns on
-bool oled_on(void);
+bool oled_on(Oled *oled);
 
 // Can be used to manually turn off the screen if it is on
 // Returns true if the screen was off or turns off
-bool oled_off(void);
+bool oled_off(Oled *oled);
 
 // Returns true if the oled is currently on, false if it is
 // not
-bool is_oled_on(void);
+bool is_oled_on(Oled *oled);
 
 // Sets the brightness of the display
-uint8_t oled_set_brightness(uint8_t level);
+uint8_t oled_set_brightness(uint8_t level, Oled *oled);
 
 // Gets the current brightness of the display
-uint8_t oled_get_brightness(void);
+uint8_t oled_get_brightness(Oled *oled);
 
 // Basically it's oled_render, but with timeout management and oled_task_user calling!
-void oled_task(void);
+void oled_task(Oled *oled);
 
 // Called at the start of oled_task, weak function overridable by the user
-void oled_task_user(void);
+void oled_task_user(Oled *oled);
 
 // Set the specific 8 lines rows of the screen to scroll.
 // 0 is the default for start, and 7 for end, which is the entire
 // height of the screen.  For 128x32 screens, rows 4-7 are not used.
-void oled_scroll_set_area(uint8_t start_line, uint8_t end_line);
+void oled_scroll_set_area(uint8_t start_line, uint8_t end_line, Oled *oled);
 
 // Sets scroll speed, 0-7, fastest to slowest. Default is three.
 // Does not take effect until scrolling is either started or restarted
 // the ssd1306 supports 8 speeds with the delay
 // listed below betwen each frame of the scrolling effect
 // 0=2, 1=3, 2=4, 3=5, 4=25, 5=64, 6=128, 7=256
-void oled_scroll_set_speed(uint8_t speed);
+void oled_scroll_set_speed(uint8_t speed, Oled *oled);
 
 // Scrolls the entire display right
 // Returns true if the screen was scrolling or starts scrolling
 // NOTE: display contents cannot be changed while scrolling
-bool oled_scroll_right(void);
+bool oled_scroll_right(Oled *oled);
 
 // Scrolls the entire display left
 // Returns true if the screen was scrolling or starts scrolling
 // NOTE: display contents cannot be changed while scrolling
-bool oled_scroll_left(void);
+bool oled_scroll_left(Oled *oled);
 
 // Turns off display scrolling
 // Returns true if the screen was not scrolling or stops scrolling
-bool oled_scroll_off(void);
+bool oled_scroll_off(Oled *oled);
 
 // Returns the maximum number of characters that will fit on a line
-uint8_t oled_max_chars(void);
+uint8_t oled_max_chars(Oled *oled);
 
 // Returns the maximum number of lines that will fit on the oled
-uint8_t oled_max_lines(void);
+uint8_t oled_max_lines(Oled *oled);
+
+extern Oled Oleds[NUM_OLEDS];
