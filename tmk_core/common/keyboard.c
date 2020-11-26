@@ -243,7 +243,9 @@ void keyboard_init(void) {
     qwiic_init();
 #endif
 #ifdef OLED_DRIVER_ENABLE
-    oled_init(OLED_ROTATION_0);
+    for(int i = 0; i < NUM_OLEDS; i++){
+      oled_init(OLED_ROTATION_0, &Oleds[i]);
+    }
 #endif
 #ifdef PS2_MOUSE_ENABLE
     ps2_mouse_init();
@@ -377,10 +379,17 @@ MATRIX_LOOP_END:
 #endif
 
 #ifdef OLED_DRIVER_ENABLE
-    oled_task();
+
+    for(int i = 0; i < NUM_OLEDS; i++){
+      oled_task(&Oleds[i]);
+    }
 #    ifndef OLED_DISABLE_TIMEOUT
     // Wake up oled if user is using those fabulous keys!
-    if (ret) oled_on();
+    if (ret) {
+      for(int i = 0; i < NUM_OLEDS; i++){
+        oled_on(&Oleds[i]);
+      }
+    }
 #    endif
 #endif
 
