@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
-#include <avr/io.h>
+// #include <avr/io.h>
 #include "wait.h"
 #include "action_layer.h"
 #include "print.h"
@@ -27,6 +27,8 @@
 #ifndef MODULE_PTR_FROM_ROW
 #   define MODULE_PTR_FROM_ROW(row) &modules[row_to_module_map[row]]
 #endif
+
+#define LED D7
 
 const uint8_t ADDR_LEFT = EXPANDER_ADDR(1,0,0);
 
@@ -73,12 +75,28 @@ uint8_t matrix_cols(void)
 
 void matrix_init(void)
 {
+  // setPinOutput(D6);
+  // setPinOutput(LED);
   unselect_rows();
   init_cols();
 
-  // TODO: Remove this - for debug
-  setPinOutput(F6);
-  writePinLow(F6);
+
+  for(uint8_t i = 0; i < NUM_MODULES; i++){
+    module_init(&modules[i]);
+    // if(i % 2 == 0){
+    //   writePinHigh(LED);
+    // }
+    // else {
+    //   writePinLow(LED);
+    // }
+  }
+  if((&modules[0])->status){
+    writePinHigh(D6);
+  }
+  else{
+    writePinLow(D6);
+  }
+  writePinHigh(LED);
 
   // initialize matrix state: all keys off
   for (uint8_t i=0; i < MATRIX_ROWS; i++) {
@@ -87,6 +105,7 @@ void matrix_init(void)
       debounce_matrix[i * MATRIX_COLS + j] = 0;
     }
   }
+
 
   matrix_init_quantum();
 }
@@ -125,12 +144,28 @@ void debounce_report(matrix_row_t change, uint8_t row) {
   }
 }
 
+// uint16_t counter = 0;
+
+void pulseLed(uint8_t num_times)
+{
+  for(uint8_t i = 0; i < num_times; i++){
+    writePinHigh(D6);
+    wait_us(250000); //Wait 1/2 sec.
+    writePinLow(D6);
+    wait_us(250000); //Wait 1/2 sec.
+  }
+    wait_us(500000); //Wait 1/2 sec.
+}
+
 uint8_t matrix_scan(void)
 {
+  // writePinLow(LED);
+  // pulseLed(2);
+  // writePinHigh(LED);
+  // wait_us(500000); //Wait 1/2 sec.
+
   clear_keyboard();
-  for(uint8_t i = 0; i < NUM_MODULES; i++){
-    module_scan(&modules[i]);
-  }
+
 
   for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
     select_row(i);
@@ -144,6 +179,17 @@ uint8_t matrix_scan(void)
   }
 
   matrix_scan_quantum();
+
+  // pulseLed(5);
+  // wait_us(1000000); //Wait 1/2 sec.
+
+  // ++counter;
+  // if(counter & 0b10) {
+  //   writePinHigh(LED);
+  // }
+  // else{
+  //   writePinLow(LED);
+  // }
 
   return 1;
 }
@@ -190,14 +236,6 @@ static matrix_row_t read_cols(uint8_t row)
 {
   matrix_row_t value = 0;
   value |= module_read_cols(MODULE_PTR_FROM_ROW(row));
-  if(row == 0) {
-    if(value){
-      writePinHigh(F6);
-    }
-    else{
-      writePinLow(F6);
-    }
-  }
   return value;
 }
 
