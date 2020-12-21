@@ -12,7 +12,7 @@ OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
 #   QMK DFU      qmk-dfu
 #   ATmega32A    bootloadHID
 #   ATmega328P   USBasp
-BOOTLOADER = atmel-dfu
+BOOTLOADER = halfkay # atmel-dfu
 
 
 # Build Options
@@ -22,7 +22,7 @@ CUSTOM_MATRIX           = yes
 UNICODE_ENABLE          = yes
 BOOTMAGIC_ENABLE        = no
 MOUSEKEY_ENABLE         = yes
-EXTRAKEY_ENABLE         = no # Audio control and System control
+EXTRAKEY_ENABLE         = yes # Audio control and System control
 CONSOLE_ENABLE          = yes # Console for debug
 COMMAND_ENABLE          = no
 NKRO_ENABLE             = yes
@@ -36,7 +36,8 @@ OLED_DRIVER_ENABLE      = yes
 
 # project specific files
 SRC = matrix.c \
-	    i2c_master.c \
-			module.c
+			module.c \
+			i2c_master.c
+	    # twimaster.c \
 
 LAYOUTS = default
