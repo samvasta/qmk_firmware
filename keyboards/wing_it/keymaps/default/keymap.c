@@ -2,7 +2,7 @@
 #include "config.h"
 #include "module.h"
 #include "wing_it.h"
-#include "oled_driver.h"
+// #include "oled_driver.h"
 
 #define ______ KC_TRNS
 
@@ -334,7 +334,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return false; // We're buffering the key stroke so don't want to press the key
       }
       else {
-        return false; // Process all other keycodes normally
+        return true; // Process all other keycodes normally
       }
   }
 }
@@ -394,7 +394,7 @@ const uint8_t PROGMEM row_to_module_map[] = {
 };
 
 
-void oled_task_user(Oled *oled) {
+// void oled_task_user(Oled *oled) {
   // if(oled->address == 0x3C) {
   //   // Host Keyboard Layer Status
   //   oled_write_ln_P(PSTR("0x3C!"), false, oled);
@@ -409,10 +409,10 @@ void oled_task_user(Oled *oled) {
     // oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false, oled);
     // oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false, oled);
     // oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false, oled);
-}
+// }
 
 
-Oled Oleds[NUM_OLEDS] = {
+// Oled Oleds[NUM_OLEDS] = {
   // new_Oled(0x3C), new_Oled(0x3D)
   // {
   //   .address = 0x3C,
@@ -440,4 +440,4 @@ Oled Oleds[NUM_OLEDS] = {
   //   .scroll_start   = 0,
   //   .scroll_end     = 7
   // }
-};
+// };

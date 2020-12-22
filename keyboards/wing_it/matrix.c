@@ -3,7 +3,7 @@
 // #include <avr/io.h>
 #include "wait.h"
 #include "action_layer.h"
-#include "print.h"
+#include <print.h>
 #include "debug.h"
 #include "util.h"
 #include "matrix.h"
@@ -28,9 +28,7 @@
 #   define MODULE_PTR_FROM_ROW(row) &modules[row_to_module_map[row]]
 #endif
 
-#define LED D7
-
-const uint8_t ADDR_LEFT = EXPANDER_ADDR(1,0,0);
+#define LED B4
 
 /* matrix state(1:on, 0:off) */
 static matrix_row_t matrix[MATRIX_ROWS];
@@ -80,7 +78,6 @@ void matrix_init(void)
   unselect_rows();
   init_cols();
 
-
   for(uint8_t i = 0; i < NUM_MODULES; i++){
     module_init(&modules[i]);
     // if(i % 2 == 0){
@@ -91,12 +88,12 @@ void matrix_init(void)
     // }
   }
   if((&modules[0])->status){
-    writePinHigh(D6);
+    writePinHigh(LED);
   }
   else{
-    writePinLow(D6);
+    writePinLow(LED);
   }
-  writePinHigh(LED);
+  // writePinHigh(LED);
 
   // initialize matrix state: all keys off
   for (uint8_t i=0; i < MATRIX_ROWS; i++) {
@@ -155,6 +152,7 @@ void pulseLed(uint8_t num_times)
     wait_us(250000); //Wait 1/2 sec.
   }
     wait_us(500000); //Wait 1/2 sec.
+    print("scanning\n");
 }
 
 uint8_t matrix_scan(void)
@@ -164,7 +162,26 @@ uint8_t matrix_scan(void)
   // writePinHigh(LED);
   // wait_us(500000); //Wait 1/2 sec.
 
-  clear_keyboard();
+  // print("Scanning:\n");
+
+  if((&modules[0])->status){
+    writePinHigh(LED);
+  }
+  else{
+    writePinLow(LED);
+  }
+
+  for(uint8_t i = 0; i < NUM_MODULES; i++){
+    module_scan(&modules[i]);
+    // if(i % 2 == 0){
+    //   writePinHigh(LED);
+    // }
+    // else {
+    //   writePinLow(LED);
+    // }
+  }
+
+  // clear_keyboard();
 
 
   for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
@@ -179,6 +196,7 @@ uint8_t matrix_scan(void)
   }
 
   matrix_scan_quantum();
+  // matrix_print();
 
   // pulseLed(5);
   // wait_us(1000000); //Wait 1/2 sec.
@@ -225,7 +243,7 @@ uint8_t matrix_key_count(void)
   return count;
 }
 
-static void  init_cols(void)
+static void init_cols(void)
 {
   for(uint8_t i = 0; i < NUM_MODULES; i++){
     module_init(&modules[i]);
@@ -234,8 +252,8 @@ static void  init_cols(void)
 
 static matrix_row_t read_cols(uint8_t row)
 {
-  matrix_row_t value = 0;
-  value |= module_read_cols(MODULE_PTR_FROM_ROW(row));
+  matrix_row_t value = module_read_cols(&modules[0]);//MODULE_PTR_FROM_ROW(row));
+  // uprintf("final row value = %d\n", value);
   return value;
 }
 
@@ -248,6 +266,7 @@ static void unselect_rows(void)
 
 static void select_row(uint8_t row)
 {
-  module_select_row(MODULE_PTR_FROM_ROW(row), row);
+  // uprintf("Select row %d::", row);
+  module_select_row(&modules[0], row);
 }
 

@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include "action.h"
 #include "module.h"
+#include <print.h>
 #include "debug.h"
 
 void expander_config(Module *module);
@@ -35,7 +36,7 @@ void expander_config(Module *module)
 uint8_t expander_write(Module *module, uint8_t reg, uint8_t data)
 {
   if (module->status == 0) {
-    return 0;
+    return -1;
   }
   uint8_t ret;
   ret = i2c_start(module->address | I2C_WRITE, I2C_TIMEOUT);
@@ -66,7 +67,7 @@ uint8_t expander_read(Module *module, uint8_t reg, uint8_t *data)
     // else {
     //   module->status -= 1;
     // }
-    return 0;
+    return -1;
   }
   uint8_t ret;
   ret = i2c_start(module->address | I2C_WRITE, I2C_TIMEOUT);
@@ -98,37 +99,43 @@ uint8_t expander_read(Module *module, uint8_t reg, uint8_t *data)
 static bool i2c_initialized = 0;
 void module_init(Module *module){
   if(!i2c_initialized){
+    uprintf("initializing i2c\n");
     i2c_init();
     i2c_initialized = 1;
   }
+  uprintf("scanning for module at address %x\n", module->address);
   module_scan(module);
 }
 
 void module_scan(Module *module){
-
-  dprintf("expander status: %d ... ", module->status);
+  // uprintf("expander status: %d ... ", module->status);
   uint8_t ret = i2c_start(module->address | I2C_WRITE, I2C_TIMEOUT);
   if (ret == 0) {
     i2c_stop();
     if (module->status == 0) {
-      dprintf("attached\n");
+      uprintf("attached\n");
       module->status = 1;
       expander_config(module);
     }
   }
   else {
     if (module->status == 1) {
-      dprintf("detached\n");
+      uprintf("detached\n");
       module->status = 0;
     }
   }
-  dprintf("%d\n", module->status);
+  // dprintf("%d status = %d\n", module->address, module->status);
 }
 
 matrix_row_t module_read_cols(Module *module){
   matrix_row_t data = 0;
   // Read value of all 8 pins of port B
-  expander_read(module, EXPANDER_REG_GPIOB, &data);
+  // uprintf("    -> Reading cols from module %d\n", module->address);
+  // uint8_t ret =
+                expander_read(module, EXPANDER_REG_GPIOB, &data);
+  // if(data != 0){
+  //   uprintf("    -> Found data %d\n", data);
+  // }
   return data;
 }
 
@@ -137,6 +144,7 @@ void module_unselect_rows(Module *module){
   // This activates the internal pull-up resistors and disables reading key presses
   // 1 = Pin is configured as an input.
   // 0 = Pin is configured as an output.
+  // uprintf("    > Unselecting rows on module %d\n", module->address);
   expander_write(module, EXPANDER_REG_IODIRA, 0xFF);
 }
 
@@ -147,5 +155,9 @@ void module_select_row(Module *module, uint8_t row){
   // (cols are active low)
   // 1 = Pin is configured as an input.
   // 0 = Pin is configured as an output.
-  expander_write(module, EXPANDER_REG_IODIRA, ~(1<<row));
+
+  // uprintf("Selecting row %d on module %d\n", row, module->address);
+  // uint8_t ret =
+                expander_write(module, EXPANDER_REG_IODIRA, ~(1<<row));
+  // uprintf("        > Returned %d\n", ret);
 }
