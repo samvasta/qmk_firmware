@@ -197,21 +197,6 @@ typedef struct Oled {
   #endif
 } Oled;
 
-// Oled* new_Oled(uint8_t address) {
-//   Oled *oled = malloc(sizeof(Oled));
-//   oled->address = address;
-//   oled->dirty          = 0;
-//   oled->initialized    = false;
-//   oled->active         = false;
-//   oled->scrolling      = false;
-//   oled->brightness     = OLED_BRIGHTNESS;
-//   oled->rotation       = 0;
-//   oled->rotation_width = 0;
-//   oled->scroll_speed   = 0;  // this holds the speed after being remapped to ssd1306 internal values
-//   oled->scroll_start   = 0;
-//   oled->scroll_end     = 7;
-//   return oled;
-// }
 
 // Initialize the oled display, rotating the rendered output based on the define passed in.
 // Returns true if the OLED was initialized successfully

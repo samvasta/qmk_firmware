@@ -12,22 +12,22 @@ void keyboard_pre_init_user(void) {
 
   // Set our LED pins as output
   setPinOutput(D6);
-  setPinOutput(B4);
+  setPinOutput(D7);
   writePinHigh(D6);
-  writePinHigh(B4);
-  wait_ms(1000);
+  writePinHigh(D7);
 
-  writePinLow(D6);
-  writePinLow(B4);
-
-  // uint8_t ret = i2c_start(EXPANDER_ADDR(0,0,0) | I2C_WRITE, I2C_TIMEOUT);
-  // writePinHigh(D7);
+  // uint8_t ret = i2c_start(EXPANDER_ADDR(0,1,0) | I2C_WRITE, I2C_TIMEOUT);
+  // // writePinHigh(D7);
   // if(ret == 0){
+  //   // It's connected
+  //   // Low = on
   //   i2c_stop();
-  //   writePinHigh(D6);
+  //   writePinLow(D6);
   // }
   // else {
-  //   writePinLow(D6);
+  //   // It's NOT connected
+  //   // High = off
+  //   writePinHigh(D6);
   // }
 
 }

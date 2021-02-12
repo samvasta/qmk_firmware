@@ -16,9 +16,9 @@
 #define DIODE_DIRECTION COL2ROW
 
 /* key matrix size */
-#define MATRIX_ROWS 4
+#define MATRIX_ROWS 8
 #define MATRIX_COLS 8
-#define NUM_MODULES 1
+#define NUM_MODULES 2
 #define MAX_MODULE_ROWS 4
 #define MAX_MODULE_COLS 8
 
@@ -33,7 +33,7 @@
 
 #define USB_MAX_POWER_CONSUMPTION 500
 
-#define NUM_OLEDS 0
+#define NUM_OLEDS 1
 #define OLED_DISPLAY_128X64
 
 /*

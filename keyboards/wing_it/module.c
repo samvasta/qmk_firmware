@@ -61,13 +61,13 @@ uint8_t expander_write(Module *module, uint8_t reg, uint8_t data)
 uint8_t expander_read(Module *module, uint8_t reg, uint8_t *data)
 {
   if (module->status == 0) {
-    // if(module->status == 0){
-    //   module->status = 100;
-    // }
-    // else {
-    //   module->status -= 1;
-    // }
-    return -1;
+    if(module->status == 0){
+      module->status = 100;
+    }
+    else {
+      module->status -= 1;
+    }
+    return 0;
   }
   uint8_t ret;
   ret = i2c_start(module->address | I2C_WRITE, I2C_TIMEOUT);
@@ -130,13 +130,8 @@ void module_scan(Module *module){
 matrix_row_t module_read_cols(Module *module){
   matrix_row_t data = 0;
   // Read value of all 8 pins of port B
-  // uprintf("    -> Reading cols from module %d\n", module->address);
-  // uint8_t ret =
-                expander_read(module, EXPANDER_REG_GPIOB, &data);
-  // if(data != 0){
-  //   uprintf("    -> Found data %d\n", data);
-  // }
-  return data;
+  expander_read(module, EXPANDER_REG_GPIOB, &data);
+  return ~data;
 }
 
 void module_unselect_rows(Module *module){

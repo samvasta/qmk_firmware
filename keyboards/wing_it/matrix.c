@@ -24,6 +24,7 @@
 #   define DEBOUNCE	5
 #endif
 
+
 #ifndef MODULE_PTR_FROM_ROW
 #   define MODULE_PTR_FROM_ROW(row) &modules[row_to_module_map[row]]
 #endif
@@ -80,20 +81,20 @@ void matrix_init(void)
 
   for(uint8_t i = 0; i < NUM_MODULES; i++){
     module_init(&modules[i]);
-    // if(i % 2 == 0){
-    //   writePinHigh(LED);
-    // }
-    // else {
-    //   writePinLow(LED);
-    // }
+    if(i % 2 == 0){
+      writePinHigh(LED);
+    }
+    else {
+      writePinLow(LED);
+    }
   }
-  if((&modules[0])->status){
-    writePinHigh(LED);
-  }
-  else{
-    writePinLow(LED);
-  }
-  // writePinHigh(LED);
+  // if((&modules[0])->status){
+  //   writePinHigh(D6);
+  // }
+  // else{
+  //   writePinLow(D6);
+  // }
+  writePinHigh(LED);
 
   // initialize matrix state: all keys off
   for (uint8_t i=0; i < MATRIX_ROWS; i++) {
@@ -143,17 +144,16 @@ void debounce_report(matrix_row_t change, uint8_t row) {
 
 // uint16_t counter = 0;
 
-void pulseLed(uint8_t num_times)
-{
-  for(uint8_t i = 0; i < num_times; i++){
-    writePinHigh(D6);
-    wait_us(250000); //Wait 1/2 sec.
-    writePinLow(D6);
-    wait_us(250000); //Wait 1/2 sec.
-  }
-    wait_us(500000); //Wait 1/2 sec.
-    print("scanning\n");
-}
+// void pulseLed(uint8_t num_times)
+// {
+//   for(uint8_t i = 0; i < num_times; i++){
+//     writePinHigh(D6);
+//     wait_us(250000); //Wait 1/2 sec.
+//     writePinLow(D6);
+//     wait_us(250000); //Wait 1/2 sec.
+//   }
+//     wait_us(500000); //Wait 1/2 sec.
+// }
 
 uint8_t matrix_scan(void)
 {
@@ -164,25 +164,10 @@ uint8_t matrix_scan(void)
 
   // print("Scanning:\n");
 
-  if((&modules[0])->status){
-    writePinHigh(LED);
-  }
-  else{
-    writePinLow(LED);
-  }
+  uint8_t union_state = 0;
 
-  for(uint8_t i = 0; i < NUM_MODULES; i++){
-    module_scan(&modules[i]);
-    // if(i % 2 == 0){
-    //   writePinHigh(LED);
-    // }
-    // else {
-    //   writePinLow(LED);
-    // }
-  }
-
-  // clear_keyboard();
-
+  unselect_rows();
+    wait_us(30);  // without this wait read unstable value.
 
   for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
     select_row(i);
@@ -191,15 +176,22 @@ uint8_t matrix_scan(void)
     matrix_row_t cols = (read_cols(i) & mask) | (matrix[i] & ~mask);
     debounce_report(cols ^ matrix[i], i);
     matrix[i] = cols;
+    union_state |= cols;
+    wait_us(30);  // without this wait read unstable value.
+  }
 
-    unselect_rows();
+  if(union_state > 0) {
+    writePinLow(D6);
+  }
+  else {
+    writePinHigh(D6);
   }
 
   matrix_scan_quantum();
   // matrix_print();
 
   // pulseLed(5);
-  // wait_us(1000000); //Wait 1/2 sec.
+  // wait_us(5000); //Wait 1/2 sec.
 
   // ++counter;
   // if(counter & 0b10) {
@@ -266,7 +258,5 @@ static void unselect_rows(void)
 
 static void select_row(uint8_t row)
 {
-  // uprintf("Select row %d::", row);
-  module_select_row(&modules[0], row);
+  module_select_row(MODULE_PTR_FROM_ROW(row), row % 4);
 }
-
