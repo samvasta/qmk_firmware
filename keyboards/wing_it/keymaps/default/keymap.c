@@ -2,7 +2,7 @@
 #include "config.h"
 #include "module.h"
 #include "wing_it.h"
-// #include "oled_driver.h"
+#include "oled_driver.h"
 
 #define ______ KC_TRNS
 
@@ -463,7 +463,7 @@ void oled_task_user(Oled *oled) {
     // oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false, oled);
     // oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false, oled);
     // oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false, oled);
-// }
+}
 
 
 Oled Oleds[NUM_OLEDS] = {
@@ -493,4 +493,4 @@ Oled Oleds[NUM_OLEDS] = {
   //   .scroll_start   = 0,
   //   .scroll_end     = 7
   // }
-// };
+};

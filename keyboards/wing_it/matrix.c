@@ -3,7 +3,7 @@
 // #include <avr/io.h>
 #include "wait.h"
 #include "action_layer.h"
-#include <print.h>
+#include "print.h"
 #include "debug.h"
 #include "util.h"
 #include "matrix.h"
@@ -29,7 +29,7 @@
 #   define MODULE_PTR_FROM_ROW(row) &modules[row_to_module_map[row]]
 #endif
 
-#define LED B4
+#define LED D7
 
 /* matrix state(1:on, 0:off) */
 static matrix_row_t matrix[MATRIX_ROWS];
@@ -78,6 +78,7 @@ void matrix_init(void)
   // setPinOutput(LED);
   unselect_rows();
   init_cols();
+
 
   for(uint8_t i = 0; i < NUM_MODULES; i++){
     module_init(&modules[i]);
@@ -162,7 +163,7 @@ uint8_t matrix_scan(void)
   // writePinHigh(LED);
   // wait_us(500000); //Wait 1/2 sec.
 
-  // print("Scanning:\n");
+  clear_keyboard();
 
   uint8_t union_state = 0;
 
@@ -188,7 +189,6 @@ uint8_t matrix_scan(void)
   }
 
   matrix_scan_quantum();
-  // matrix_print();
 
   // pulseLed(5);
   // wait_us(5000); //Wait 1/2 sec.
@@ -235,7 +235,7 @@ uint8_t matrix_key_count(void)
   return count;
 }
 
-static void init_cols(void)
+static void  init_cols(void)
 {
   for(uint8_t i = 0; i < NUM_MODULES; i++){
     module_init(&modules[i]);
@@ -244,8 +244,8 @@ static void init_cols(void)
 
 static matrix_row_t read_cols(uint8_t row)
 {
-  matrix_row_t value = module_read_cols(&modules[0]);//MODULE_PTR_FROM_ROW(row));
-  // uprintf("final row value = %d\n", value);
+  matrix_row_t value = 0;
+  value |= module_read_cols(MODULE_PTR_FROM_ROW(row));
   return value;
 }
 

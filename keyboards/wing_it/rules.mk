@@ -1,8 +1,8 @@
 MCU = atmega32u4
-# F_CPU = 16000000
-# ARCH = AVR8
-# F_USB = $(F_CPU)
-# OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
+F_CPU = 16000000
+ARCH = AVR8
+F_USB = $(F_CPU)
+OPT_DEFS += -DINTERRUPT_CONTROL_ENDPOINT
 
 # Bootloader selection
 #   Teensy       halfkay
@@ -31,12 +31,13 @@ BACKLIGHT_ENABLE        = no
 SWAP_HANDS_ENABLE       = no
 RGBLIGHT_ENABLE         = no
 MIDI_ENABLE             = no
-OLED_DRIVER_ENABLE      = no
+OLED_DRIVER_ENABLE      = yes
+
 
 # project specific files
 SRC = matrix.c \
 			module.c \
 			i2c_master.c
-	    # twimaster.c
+	    # twimaster.c \
 
 LAYOUTS = default

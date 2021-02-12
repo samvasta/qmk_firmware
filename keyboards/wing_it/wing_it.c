@@ -2,10 +2,6 @@
 #include "module.h"
 
 void keyboard_pre_init_user(void) {
-  //Wait so the debug console can pick up the device
-  wait_ms(5000);
-  debug_enable=true;
-  debug_matrix=true;
   // Call the keyboard pre init code.
 
   // i2c_init();
