@@ -3,6 +3,8 @@
 #include "module.h"
 #include "wing_it.h"
 #include "oled_driver.h"
+#include "print.h"
+#include "matrix.h"
 
 #define ______ KC_TRNS
 
@@ -52,6 +54,11 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // KC_A, KC_Z,    KC_X,    KC_C,  KC_V,  KC_B,                                                  KC_N,     KC_M,  KC_A, KC_A,  KC_A, KC_A,
         // KC_A,  KC_A, KC_A, KC_A,   KC_A,   KC_A, KC_A,   KC_A,                      KC_A, KC_A,   KC_A, KC_A,   KC_A,      KC_A, KC_A,  KC_A
 
+//
+        // KC_ESC,    KC_Q,    KC_W,    KC_E,  KC_R,  KC_T,               //                                   KC_Y,     KC_U,  KC_I,     KC_O,    KC_P,     KC_BSPC,
+        // KC_TAB,    KC_A,    KC_S,    KC_D,  KC_F,  KC_G,               //                                   KC_H,     KC_J,  KC_K,     KC_L,    KC_SCLN,  KC_ENTER,
+        // KC_LSHIFT, KC_Z,    KC_X,    KC_C,  KC_V,  KC_B,               //                                   KC_N,     KC_M,  KC_COMMA, KC_DOT,  KC_SLASH, KC_RSHIFT,
+        // KC_LCTRL,  KC_LGUI, KC_LALT, FN8,   FN2,   KC_SPACE, FN1,   FN4//,                      FN8, FN2,   KC_SPACE, FN1,   FN4,      KC_RALT, KC_RGUI,  KC_RCTRL
 
         KC_ESC,    KC_Q,    KC_W,    KC_E,  KC_R,  KC_T,                                                  KC_Y,     KC_U,  KC_I,     KC_O,    KC_P,     KC_BSPC,
         KC_TAB,    KC_A,    KC_S,    KC_D,  KC_F,  KC_G,                                                  KC_H,     KC_J,  KC_K,     KC_L,    KC_SCLN,  KC_ENTER,
@@ -242,13 +249,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	// )
 };
 
-bool unicode_active = false;
+bool unicode_active = 0;
 uint8_t unicode_pos = 0;
 char unicode_buff[4];
 
 void dump_unicode(void) {
   if(unicode_pos == 4) {
-    send_unicode_hex_string(unicode_buff);
+    // send_unicode_hex_string(unicode_buff);
   }
   unicode_buff[0] = 0;
   unicode_buff[1] = 0;
@@ -274,8 +281,6 @@ char get_char(uint16_t keycode){
       return '0';
     case KC_1:
       return '1';
-    case KC_2:
-      return '2';
     case KC_3:
       return '3';
     case KC_4:
@@ -310,50 +315,55 @@ char get_char(uint16_t keycode){
 uint16_t last_keycode = 0;
 keypos_t last_pos;
 bool has_pressed = false;
+uint16_t last_keycode_count = 0;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    // writePinLow(D6);
-    has_pressed = record->event.pressed;
-    last_keycode = keycode;
-    last_pos = record->event.key;
-    return true;
-  // if(record->event.pressed){
-  // }
-  // switch (keycode) {
-  //   case UNICD:
-  //     if (record->event.pressed) {
-  //       unicode_active = true;
-  //     } else {
-  //       dump_unicode();
-  //       unicode_active = false;
-  //     }
-  //     return false;
-  //   case FN1:
-  //     on_fn(1, record->event.pressed);
-  //     return false; // Let QMK send the enter press/release events
-  //   case FN2:
-  //     on_fn(2, record->event.pressed);
-  //     return false; // Let QMK send the enter press/release events
-  //   case FN4:
-  //     on_fn(4, record->event.pressed);
-  //     return false; // Let QMK send the enter press/release events
-  //   case FN8:
-  //     on_fn(8, record->event.pressed);
-  //     return false; // Let QMK send the enter press/release events
-  //   default:
-  //     if(unicode_active){
-  //       if(record->event.pressed && is_hex_digit(keycode)){
-  //         unicode_buff[unicode_pos++] = get_char(keycode);
-  //         if(unicode_pos >= 4){
-  //           dump_unicode();
-  //         }
-  //       }
-  //       return false; // We're buffering the key stroke so don't want to press the key
-  //     }
-  //     else {
-  //       return true; // Process all other keycodes normally
-  //     }
-  // }
+  // writePinLow(D6);
+  if(keycode == last_keycode) {
+    ++last_keycode_count;
+  }
+  else {
+    last_keycode_count = 0;
+  }
+  has_pressed = record->event.pressed;
+  last_keycode = keycode;
+  last_pos = record->event.key;
+  return true;
+  switch (keycode) {
+    // case UNICD:
+    //   if (record->event.pressed) {
+    //     unicode_active = true;
+    //   } else {
+    //     dump_unicode();
+    //     unicode_active = false;
+    //   }
+    //   return false;
+    // case FN1:
+    //   on_fn(1, record->event.pressed);
+    //   return false;
+    // case FN2:
+    //   on_fn(2, record->event.pressed);
+    //   return false;
+    // case FN4:
+    //   on_fn(4, record->event.pressed);
+    //   return false;
+    // case FN8:
+    //   on_fn(8, record->event.pressed);
+    //   return false;
+    default:
+      if(unicode_active){
+        if(record->event.pressed && is_hex_digit(keycode)){
+          unicode_buff[unicode_pos++] = get_char(keycode);
+          if(unicode_pos >= 4){
+            dump_unicode();
+          }
+        }
+        return false; // We're buffering the key stroke so don't want to press the key
+      }
+      else {
+        return true; // Process all other keycodes normally
+      }
+  }
 }
 
 
@@ -411,31 +421,93 @@ const uint8_t row_to_module_map[MATRIX_ROWS] = {
 };
 
 
+bool keyboard_drawn = 0;
 char buffer[10];
 uint8_t count = 0;
 void oled_task_user(Oled *oled) {
+  ++count;
+  if(count > 99) {
+    count = 0;
+  }
+
+
+  if(count % 10 != 0) {
+    return;
+  }
+
+  if(count % 20 == 0) {
+    oled->address = 0x3C;
+  }
+  else {
+    oled->address = 0x3D;
+  }
+
+
   if(oled->address == 0x3C) {
     // Host Keyboard Layer Status
     oled_write_ln_P(PSTR("0x3C!"), false, oled);
 
     oled_write_char(48+(count/10), false, oled);
     oled_write_ln_P(PSTR(""), false, oled);
-    ++count;
-    if(count > 99) {
-      count = 0;
-    }
 
     uint8_t row = last_pos.row;
     uint8_t col = last_pos.col;
+    sprintf(buffer, "%d,%d%c (%d), %d", row, col, has_pressed? '!' : '?', last_keycode_count, matrix_key_count());
 
-    oled_write_P(PSTR("Last key: "), false, oled);
-    oled_write_char(row+48, false, oled);
-    oled_write_char(',', false, oled);
-    oled_write_char(col+48, false, oled);
-    oled_write_char(has_pressed ? '!' : '?', false, oled);
+    oled_write_ln_P(PSTR("Last key: "), false, oled);
+    oled_write_ln(buffer, false, oled);
+
+
+
+    for(uint8_t r = 0; r < MATRIX_ROWS; ++r)
+    {
+      matrix_row_t row = matrix_get_row(r);
+      for(uint8_t c = 0; c < MATRIX_COLS; ++c)
+      {
+        uint8_t on = row & (1 << c);
+        uint8_t center_x = c*4+1;
+        uint8_t center_y = r*4+1 + 32;
+
+        // if(on)
+        // {
+          oled_write_pixel(center_x, center_y, on, oled);
+          oled_write_pixel(center_x+1, center_y, on, oled);
+          oled_write_pixel(center_x, center_y+1, on, oled);
+          oled_write_pixel(center_x+1, center_y+1, on, oled);
+
+
+          oled_write_pixel(center_x+2, center_y, on, oled);
+          oled_write_pixel(center_x+2, center_y+1, on, oled);
+          oled_write_pixel(center_x+2, center_y+2, on, oled);
+          oled_write_pixel(center_x, center_y+2, on, oled);
+          oled_write_pixel(center_x+1, center_y+2, on, oled);
+        // }
+
+        if(!keyboard_drawn) {
+          oled_write_pixel(center_x-1, center_y-1, true, oled);
+          oled_write_pixel(center_x-1, center_y, true, oled);
+          oled_write_pixel(center_x-1, center_y+1, true, oled);
+          oled_write_pixel(center_x-1, center_y+2, true, oled);
+
+          oled_write_pixel(center_x+2, center_y-1, true, oled);
+          // oled_write_pixel(center_x+2, center_y, true, oled);
+          // oled_write_pixel(center_x+2, center_y+1, true, oled);
+          // oled_write_pixel(center_x+2, center_y+2, true, oled);
+
+          oled_write_pixel(center_x, center_y-1, true, oled);
+          oled_write_pixel(center_x+1, center_y-1, true, oled);
+          // oled_write_pixel(center_x, center_y+2, true, oled);
+          // oled_write_pixel(center_x+1, center_y+2, true, oled);
+        }
+      }
+    }
+    keyboard_drawn = 1;
+  }
+  else if(oled->address == 0x3D) {
+    // Host Keyboard Layer Status
+    oled_write_ln_P(PSTR("0x3D!"), false, oled);
+    oled_write_char(48+(count/10), false, oled);
     oled_write_ln_P(PSTR(""), false, oled);
-
-    // sprintf(buffer, "%d,%d", row, col);
     for(uint8_t i = 0; i < NUM_MODULES; i++) {
       Module module = modules[i];
 
@@ -450,12 +522,6 @@ void oled_task_user(Oled *oled) {
         oled_write_ln_P(PSTR(" disconnected"), false, oled);
       }
     }
-
-
-  }
-  else if(oled->address == 0x3D) {
-    // Host Keyboard Layer Status
-    oled_write_ln_P(PSTR("0x3D!"), false, oled);
   }
 
     // // Host Keyboard LED Status
@@ -468,7 +534,7 @@ void oled_task_user(Oled *oled) {
 
 Oled Oleds[NUM_OLEDS] = {
   {
-    .address = 0x3C,
+    .address = 0x3D,
     .dirty          = 0,
     .initialized    = false,
     .active         = false,

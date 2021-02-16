@@ -19,11 +19,11 @@ BOOTLOADER = halfkay # atmel-dfu
 #   comment out to disable the options.
 #
 CUSTOM_MATRIX           = yes
-UNICODE_ENABLE          = yes
+UNICODE_ENABLE          = no
 BOOTMAGIC_ENABLE        = no
-MOUSEKEY_ENABLE         = yes
+MOUSEKEY_ENABLE         = no
 EXTRAKEY_ENABLE         = yes # Audio control and System control
-CONSOLE_ENABLE          = yes # Console for debug
+CONSOLE_ENABLE          = no # Console for debug
 COMMAND_ENABLE          = no
 NKRO_ENABLE             = yes
 USB_6KRO_ENABLE         = no

@@ -29,7 +29,7 @@
 #define MOUSEKEY_WHEEL_DELAY    0
 
 /* Set 0 if debouncing isn't needed */
-#define DEBOUNCE    5
+#define DEBOUNCE    0
 
 #define USB_MAX_POWER_CONSUMPTION 500
 

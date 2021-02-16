@@ -39,10 +39,11 @@ static matrix_row_t matrix[MATRIX_ROWS];
 // already changed in the last DEBOUNCE scans.
 static uint8_t debounce_matrix[MATRIX_ROWS * MATRIX_COLS];
 
-static matrix_row_t read_cols(uint8_t row);
+// static matrix_row_t read_cols(uint8_t row);
 static void init_cols(void);
 static void unselect_rows(void);
-static void select_row(uint8_t row);
+// static void select_row(uint8_t row);
+static void scan_modules(void);
 
 __attribute__ ((weak))
 void matrix_init_user(void) {}
@@ -76,6 +77,7 @@ void matrix_init(void)
 {
   // setPinOutput(D6);
   // setPinOutput(LED);
+  scan_modules();
   unselect_rows();
   init_cols();
 
@@ -165,27 +167,35 @@ uint8_t matrix_scan(void)
 
   clear_keyboard();
 
-  uint8_t union_state = 0;
+  uint8_t row = 0;
 
-  unselect_rows();
-    wait_us(30);  // without this wait read unstable value.
+  for(uint8_t module_idx = 0; module_idx < NUM_MODULES; ++module_idx)
+  {
+    Module *module = MODULE_PTR_FROM_ROW(row);
+    module_scan(module);
+    wait_us(30);
 
-  for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-    select_row(i);
-    wait_us(30);  // without this wait read unstable value.
-    matrix_row_t mask = debounce_mask(i);
-    matrix_row_t cols = (read_cols(i) & mask) | (matrix[i] & ~mask);
-    debounce_report(cols ^ matrix[i], i);
-    matrix[i] = cols;
-    union_state |= cols;
-    wait_us(30);  // without this wait read unstable value.
-  }
+    for(uint8_t module_row = 0; module_row < module->num_rows; ++module_row)
+    {
+      module_select_row(module, module_row);
+      // wait_us(30);
+      matrix_row_t mask = debounce_mask(row);
+      matrix_row_t cols = matrix[row] & ~mask;
+      matrix_row_t read = module_read_cols(module);
+      // wait_us(30);
 
-  if(union_state > 0) {
-    writePinLow(D6);
-  }
-  else {
-    writePinHigh(D6);
+      // Seems like a hardware issue?
+      if(module_idx == 0) {
+        read = ~read;
+      }
+      cols |= (read & mask);
+      debounce_report(cols ^ matrix[row], row);
+      matrix[row] = cols;
+
+      ++row;
+    }
+
+    // module_unselect_rows(module);
   }
 
   matrix_scan_quantum();
@@ -242,12 +252,12 @@ static void  init_cols(void)
   }
 }
 
-static matrix_row_t read_cols(uint8_t row)
-{
-  matrix_row_t value = 0;
-  value |= module_read_cols(MODULE_PTR_FROM_ROW(row));
-  return value;
-}
+// static matrix_row_t read_cols(uint8_t row)
+// {
+//   matrix_row_t value = 0;
+//   value |= module_read_cols(MODULE_PTR_FROM_ROW(row));
+//   return value;
+// }
 
 static void unselect_rows(void)
 {
@@ -256,7 +266,15 @@ static void unselect_rows(void)
   }
 }
 
-static void select_row(uint8_t row)
+// static void select_row(uint8_t row)
+// {
+//   module_select_row(MODULE_PTR_FROM_ROW(row), row % 4);
+// }
+
+static void scan_modules()
 {
-  module_select_row(MODULE_PTR_FROM_ROW(row), row % 4);
+  for(uint8_t i = 0; i < NUM_MODULES; i++)
+  {
+    module_scan(MODULE_PTR_FROM_ROW(i));
+  }
 }
