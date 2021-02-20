@@ -30,6 +30,13 @@ void expander_config(Module *module)
   // 0 = Pin is configured as an output.
   expander_write(module, EXPANDER_REG_IODIRB, 0xFF);
   expander_write(module, EXPANDER_REG_IODIRA, 0xFF);
+
+
+  // Set the Output value for pins configured as output
+  // 1 = Pin logic level high.
+  // 0 = Pin logic level low.
+  expander_write(module, EXPANDER_REG_OLATA, 0x00);
+  expander_write(module, EXPANDER_REG_OLATB, 0x00);
 }
 
 uint8_t expander_write(Module *module, uint8_t reg, uint8_t data)

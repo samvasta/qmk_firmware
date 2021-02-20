@@ -4,6 +4,7 @@
 #include "wing_it.h"
 #include "oled_driver.h"
 #include <stdio.h>
+#include <string.h>
 #include "matrix.h"
 
 #define ______ KC_TRNS
@@ -55,17 +56,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // KC_A,  KC_A, KC_A, KC_A,   KC_A,   KC_A, KC_A,   KC_A,                      KC_A, KC_A,   KC_A, KC_A,   KC_A,      KC_A, KC_A,  KC_A
 
 //
-        KC_ESC,    KC_Q,    KC_W,    KC_E,  KC_R,  KC_T,               //                                   KC_Y,     KC_U,  KC_I,     KC_O,    KC_P,     KC_BSPC,
-        KC_TAB,    KC_A,    KC_S,    KC_D,  KC_F,  KC_G,               //                                   KC_H,     KC_J,  KC_K,     KC_L,    KC_SCLN,  KC_ENTER,
-        KC_LSHIFT, KC_Z,    KC_X,    KC_C,  KC_V,  KC_B,               //                                   KC_N,     KC_M,  KC_COMMA, KC_DOT,  KC_SLASH, KC_RSHIFT,
-        KC_LCTRL,  KC_LGUI, KC_LALT, FN8,   FN2,   KC_SPACE, FN1,   FN4//,                      FN8, FN2,   KC_SPACE, FN1,   FN4,      KC_RALT, KC_RGUI,  KC_RCTRL
+        // KC_ESC,    KC_Q,    KC_W,    KC_E,  KC_R,  KC_T,               //                                   KC_Y,     KC_U,  KC_I,     KC_O,    KC_P,     KC_BSPC,
+        // KC_TAB,    KC_A,    KC_S,    KC_D,  KC_F,  KC_G,               //                                   KC_H,     KC_J,  KC_K,     KC_L,    KC_SCLN,  KC_ENTER,
+        // KC_LSHIFT, KC_Z,    KC_X,    KC_C,  KC_V,  KC_B,               //                                   KC_N,     KC_M,  KC_COMMA, KC_DOT,  KC_SLASH, KC_RSHIFT,
+        // KC_LCTRL,  KC_LGUI, KC_LALT, FN8,   FN2,   KC_SPACE, FN1,   FN4//,                      FN8, FN2,   KC_SPACE, FN1,   FN4,      KC_RALT, KC_RGUI,  KC_RCTRL
 
-        // KC_ESC,    KC_Q,    KC_W,    KC_E,  KC_R,  KC_T,                                                  KC_Y,     KC_U,  KC_I,     KC_O,    KC_P,     KC_BSPC,
-        // KC_TAB,    KC_A,    KC_S,    KC_D,  KC_F,  KC_G,                                                  KC_H,     KC_J,  KC_K,     KC_L,    KC_SCLN,  KC_ENTER,
-        // KC_LSHIFT, KC_Z,    KC_X,    KC_C,  KC_V,  KC_B,                                                  KC_N,     KC_M,  KC_COMMA, KC_DOT,  KC_SLASH, KC_RSHIFT,
-        // KC_LCTRL,  KC_LGUI, KC_LALT, FN8,   FN2,   KC_SPACE, FN1,   FN4,                      FN8, FN2,   KC_SPACE, FN1,   FN4,      KC_RALT, KC_RGUI,  KC_RCTRL
+        KC_ESC,    KC_Q,    KC_W,    KC_E,  KC_R,  KC_T,                                                  KC_Y,     KC_U,  KC_I,     KC_O,    KC_P,     KC_BSPC,
+        KC_TAB,    KC_A,    KC_S,    KC_D,  KC_F,  KC_G,                                                  KC_H,     KC_J,  KC_K,     KC_L,    KC_SCLN,  KC_ENTER,
+        KC_LSHIFT, KC_Z,    KC_X,    KC_C,  KC_V,  KC_B,                                                  KC_N,     KC_M,  KC_COMMA, KC_DOT,  KC_SLASH, KC_RSHIFT,
+        KC_LCTRL,  KC_LGUI, KC_LALT, FN8,   FN2,   KC_SPACE, FN1,   FN4,                      FN8, FN2,   KC_SPACE, FN1,   FN4,      KC_RALT, KC_RGUI,  KC_RCTRL
 
-    )
+    ),
 
 	// /*
 	// LAYER 1 (FN 1)
@@ -80,12 +81,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	// │        │        │        │        │        │        │  │        ││        │        │        ││        │  │        │        │        │        │        │        │
 	// └────────┴────────┴────────┴────────┴────────┴────────┘  └────────┘└────────┘        └────────┘└────────┘  └────────┴────────┴────────┴────────┴────────┴────────┘
 	// */
-	// [LAYER_1] = LAYOUT(
-	// 	______, KC_NO,     KC_NO,   KC_NO,   KC_HOME, KC_PGUP,                                                  KC_NO , KC_BSPC, KC_UP,   KC_DEL,   KC_INS, KC_PSCR,
-	// 	______, S(KC_TAB), KC_LCTL, KC_LALT, KC_END,  KC_PGDN,                                                  KC_NO , KC_LEFT, KC_DOWN, KC_RIGHT, KC_NO , ______,
-	// 	______, KC_NO,     KC_NO,   KC_NO,   KC_NO,   KC_NO,                                                    KC_NO , KC_CUT,  KC_COPY, KC_PASTE, KC_NO , ______,
-	// 	______, ______,    ______,  ______,  ______,  ______,  ______, ______,                ______,  ______,  ______, ______,  ______,  ______,   ______, ______
-	// ),
+	[LAYER_1] = LAYOUT(
+		______, KC_NO,     KC_NO,   KC_NO,   KC_HOME, KC_PGUP,                                                  KC_NO , KC_BSPC, KC_UP,   KC_DEL,   KC_INS, KC_PSCR,
+		______, S(KC_TAB), KC_LCTL, KC_LALT, KC_END,  KC_PGDN,                                                  KC_NO , KC_LEFT, KC_DOWN, KC_RIGHT, KC_NO , ______,
+		______, KC_NO,     KC_NO,   KC_NO,   KC_NO,   KC_NO,                                                    KC_NO , KC_CUT,  KC_COPY, KC_PASTE, KC_NO , ______,
+		______, ______,    ______,  ______,  ______,  ______,  ______, ______,                ______,  ______,  ______, ______,  ______,  ______,   ______, ______
+	),
 
 	// /*
 	// LAYER 2 (FN 2)
@@ -343,8 +344,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   //   //   on_fn(1, record->event.pressed);
   //   //   return false;
   //   // case FN2:
-  //   //   on_fn(2, record->event.pressed);
-  //   //   return false;
+  //   //   on_fn(2, record->event.pressed);buffer
   //   // case FN4:
   //   //   on_fn(4, record->event.pressed);
   //   //   return false;
@@ -393,51 +393,60 @@ Module modules[NUM_MODULES] = {
   },
 
   // Right Hand
-  // {
-  //   .address=EXPANDER_ADDR(1,0,0),
-  //   .num_rows=4,
-  //   .num_cols=8,
-  //   .col_map={
-  //     EXPANDER_B1,
-  //     EXPANDER_B2,
-  //     EXPANDER_B3,
-  //     EXPANDER_B4,
-  //     EXPANDER_B5,
-  //     EXPANDER_B6,
-  //     EXPANDER_B7,
-  //     EXPANDER_B8,
-  //   },
-  //   .row_map = {
-  //     EXPANDER_A1,
-  //     EXPANDER_A2,
-  //     EXPANDER_A3,
-  //     EXPANDER_A4
-  //   }
-  // }
+  {
+    .address=EXPANDER_ADDR(1,0,0),
+    .num_rows=4,
+    .num_cols=8,
+    .col_map={
+      EXPANDER_B1,
+      EXPANDER_B2,
+      EXPANDER_B3,
+      EXPANDER_B4,
+      EXPANDER_B5,
+      EXPANDER_B6,
+      EXPANDER_B7,
+      EXPANDER_B8,
+    },
+    .row_map = {
+      EXPANDER_A1,
+      EXPANDER_A2,
+      EXPANDER_A3,
+      EXPANDER_A4
+    }
+  }
 };
 
 const uint8_t row_to_module_map[MATRIX_ROWS] = {
-  0,0,0,0
-  // 1,1,1,1
+  0,0,0,0,
+  1,1,1,1
 };
 
-// Oled oled2 = {
-//   .address = 0x3D,
-//   .dirty          = 0,
-//   .initialized    = false,
-//   .active         = false,
-//   .scrolling      = false,
-//   .brightness     = OLED_BRIGHTNESS,
-//   .rotation       = 0,
-//   .rotation_width = 0,
-//   .scroll_speed   = 0,  // this holds the speed after being remapped to ssd1306 internal values
-//   .scroll_start   = 0,
-//   .scroll_end     = 7
-// };
+
+uint8_t matrix_key_count(void)
+{
+  uint8_t count = 0;
+  for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
+    count += bitpop(matrix_get_row(i));
+  }
+  return count;
+}
 
 //QUICK HACK
 void keyboard_post_init_user(void) {
 
+  // Oled oled2 = {
+  //   .address = 0x3D,
+  //   .dirty          = 0,
+  //   .initialized    = false,
+  //   .active         = false,
+  //   .scrolling      = false,
+  //   .brightness     = OLED_BRIGHTNESS,
+  //   .rotation       = 0,
+  //   .rotation_width = 0,
+  //   .scroll_speed   = 0,  // this holds the speed after being remapped to ssd1306 internal values
+  //   .scroll_start   = 0,
+  //   .scroll_end     = 7
+  // };
   // oled_init(0, &oled2);
 }
 
@@ -446,12 +455,12 @@ char buffer[10];
 uint8_t count = 0;
 void oled_task_user(Oled *oled) {
     ++count;
-    if(count > 99) {
+    if(count > 999) {
       count = 0;
     }
 
 
-    if(count % 10 != 0) {
+    if(count % 100 != 0) {
       return;
     }
 
@@ -464,7 +473,7 @@ void oled_task_user(Oled *oled) {
 
   // oled_on(oled);
 
-  if(oled->address == 0x3C) {
+  if(oled->address == 0x3C && count % 200 == 0) {
     // Host Keyboard Layer Status
     oled_write_ln_P(PSTR("0x3C!"), false, oled);
 
@@ -473,14 +482,11 @@ void oled_task_user(Oled *oled) {
 
     uint8_t row = last_pos.row;
     uint8_t col = last_pos.col;
-    uint8_t count = 0;
-    for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-      count += bitpop(matrix_get_row(i));
-    }
-    for(uint8_t i = 0; i < 10; i++) {
-      buffer[i] = 0;
-    }
-    sprintf(buffer, "%02d,%02d%c (%02d) %02d (%02d)", row, col, has_pressed? '!' : '?', last_keycode_count, matrix_key_count(), count);
+
+    // clear buffer
+    memset(buffer, 0, sizeof(buffer));
+
+    sprintf(buffer, "%02d,%02d%c (%02d) %02d", row, col, has_pressed? '!' : '?', last_keycode_count, matrix_key_count());
 
     oled_write_ln_P(PSTR("Last key: "), false, oled);
     oled_write_ln(buffer, false, oled);
@@ -537,35 +543,35 @@ void oled_task_user(Oled *oled) {
     keyboard_drawn = 1;
     // oled_task_user(&oled2);
   }
-  // else if(oled->address == 0x3D) {
-  //   // Host Keyboard Layer Status
-  //   oled_write_ln_P(PSTR("0x3D!"), false, oled);
-  //   oled_write_char(48+(count/10), false, oled);
-  //   oled_write_ln_P(PSTR(""), false, oled);
-  //   for(uint8_t i = 0; i < NUM_MODULES; i++) {
-  //     Module module = modules[i];
+  else if(oled->address == 0x3D && count % 200 != 0) {
+    // Host Keyboard Layer Status
+    oled_write_ln_P(PSTR("0x3D!"), false, oled);
+    oled_write_char(48+(count/10), false, oled);
+    oled_write_ln_P(PSTR(""), false, oled);
+    for(uint8_t i = 0; i < NUM_MODULES; i++) {
+      Module module = modules[i];
 
-  //     oled_write_char(i+48, false, oled);
+      oled_write_char(i+48, false, oled);
 
-  //     uint8_t ret = i2c_start(module.address | I2C_WRITE, I2C_TIMEOUT);
-  //     if(ret == 0){
-  //       i2c_stop();
-  //       oled_write_ln_P(PSTR(" connected"), false, oled);
-  //     }
-  //     else {
-  //       oled_write_ln_P(PSTR(" disconnected"), false, oled);
-  //     }
-  //   }
+      uint8_t ret = i2c_start(module.address | I2C_WRITE, I2C_TIMEOUT);
+      if(ret == 0){
+        i2c_stop();
+        oled_write_ln_P(PSTR(" connected"), false, oled);
+      }
+      else {
+        oled_write_ln_P(PSTR(" disconnected"), false, oled);
+      }
+    }
 
 
-  //   for(uint8_t r = 0; r < MATRIX_ROWS; ++r)
-  //   {
-  //     matrix_row_t row = matrix_get_row(r);
-  //     sprintf(buffer, "%x; ", bitpop(row));
-  //     oled_write(buffer, false, oled);
-  //   }
+    for(uint8_t r = 0; r < MATRIX_ROWS; ++r)
+    {
+      matrix_row_t row = matrix_get_row(r);
+      sprintf(buffer, "%x; ", bitpop(row));
+      oled_write(buffer, false, oled);
+    }
 
-  // }
+  }
 
     // // Host Keyboard LED Status
     // led_t led_state = host_keyboard_led_state();

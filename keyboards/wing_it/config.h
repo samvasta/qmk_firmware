@@ -16,11 +16,11 @@
 #define DIODE_DIRECTION COL2ROW
 
 /* key matrix size */
-#define NUM_MODULES 1
+#define NUM_MODULES 2
 #define MAX_MODULE_ROWS 4
 #define MAX_MODULE_COLS 8
 
-#define MATRIX_ROWS 4
+#define MATRIX_ROWS 8
 #define MATRIX_COLS 8
 
 #define MOUSEKEY_INTERVAL       20

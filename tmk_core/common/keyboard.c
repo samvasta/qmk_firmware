@@ -386,7 +386,6 @@ void keyboard_task(void) {
                 continue;
             }
 #endif
-            if (debug_matrix) matrix_print();
             matrix_row_t col_mask = 1;
             for (uint8_t c = 0; c < MATRIX_COLS; c++, col_mask <<= 1) {
                 if (matrix_change & col_mask) {
@@ -449,19 +448,18 @@ MATRIX_LOOP_END:
 #ifdef OLED_DRIVER_ENABLE
 
     for(int i = 0; i < NUM_OLEDS; i++){
-      oled_task(&Oleds[i]);
+      Oled *oled = &Oleds[i];
+      oled_task(oled);
     }
 #    ifndef OLED_DISABLE_TIMEOUT
     // Wake up oled if user is using those fabulous keys!
-    if (ret) {
-      for(int i = 0; i < NUM_OLEDS; i++){
+    for(int i = 0; i < NUM_OLEDS; i++){
 #        ifdef ENCODER_ENABLE
-        if (matrix_changed || encoders_changed) oled_on(&Oleds[i]);
+      if (matrix_changed || encoders_changed) oled_on(&Oleds[i]);
 #        else
-        if (matrix_changed) oled_on(&Oleds[i]);
+      if (matrix_changed) oled_on(&Oleds[i]);
 #        endif
 #    endif
-      }
     }
     // Wake up oled if user is using those fabulous keys or spinning those encoders!
 #endif

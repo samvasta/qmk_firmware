@@ -123,46 +123,38 @@ void debounce_report(matrix_row_t change, uint8_t row) {
   }
 }
 
-// uint16_t counter = 0;
-
-// void pulseLed(uint8_t num_times)
-// {
-//   for(uint8_t i = 0; i < num_times; i++){
-//     writePinHigh(D6);
-//     wait_us(250000); //Wait 1/2 sec.
-//     writePinLow(D6);
-//     wait_us(250000); //Wait 1/2 sec.
-//   }
-//     wait_us(500000); //Wait 1/2 sec.
-// }
-
 uint8_t matrix_scan(void)
 {
-  clear_keyboard();
-
   uint8_t row = 0;
+  uint8_t changed = 0;
 
   for(uint8_t module_idx = 0; module_idx < NUM_MODULES; ++module_idx)
   {
     Module *module = MODULE_PTR_FROM_ROW(row);
-    module_scan(module);
-    wait_us(30);
+    if(!module->status)
+    {
+      module_scan(module);
+      wait_us(30);
+    }
 
     for(uint8_t module_row = 0; module_row < module->num_rows; ++module_row)
     {
       module_select_row(module, module_row);
-      // wait_us(30);
+      wait_us(30);
       matrix_row_t mask = debounce_mask(row);
+
+      //Turn off keys that can change
       matrix_row_t cols = matrix[row] & ~mask;
+
+      //Read current matrix state
       matrix_row_t read = module_read_cols(module);
       // wait_us(30);
 
-      // Seems like a hardware issue?
-      // if(module_idx == 0) {
-      //   read = ~read;
-      // }
-      cols |= (read & mask);
-      debounce_report(cols ^ matrix[row], row);
+      //Turn on keys that can change and are pressed
+      cols |= (~read & mask);
+      uint8_t row_change = cols ^ matrix[row];
+      changed |= row_change;
+      debounce_report(row_change, row);
       matrix[row] = cols;
 
       ++row;
@@ -171,7 +163,7 @@ uint8_t matrix_scan(void)
 
   matrix_scan_quantum();
 
-  return 1;
+  return changed;
 }
 
 inline
@@ -186,31 +178,6 @@ matrix_row_t matrix_get_row(uint8_t row)
   return matrix[row];
 }
 
-void matrix_print(void)
-{
-  print("\nr/c 0123456789ABCDEF\n");
-  for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-    phex(row); print(": ");
-    pbin_reverse16(matrix_get_row(row));
-    print("\n");
-  }
-}
-
-uint8_t matrix_key_count(void)
-{
-  uint8_t count = 0;
-  for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-    count += bitpop(matrix[i]);
-  }
-  return count;
-}
-
-// static matrix_row_t read_cols(uint8_t row)
-// {
-//   matrix_row_t value = 0;
-//   value |= module_read_cols(MODULE_PTR_FROM_ROW(row));
-//   return value;
-// }
 
 static void unselect_rows(void)
 {
@@ -218,11 +185,6 @@ static void unselect_rows(void)
     module_unselect_rows(&modules[i]);
   }
 }
-
-// static void select_row(uint8_t row)
-// {
-//   module_select_row(MODULE_PTR_FROM_ROW(row), row % 4);
-// }
 
 static void scan_modules()
 {
