@@ -116,6 +116,9 @@ static i2c_status_t i2c_transmit_P(uint8_t address, const uint8_t *data, uint16_
 }
 #endif
 
+static uint8_t oled_buffer[OLED_MATRIX_SIZE];
+
+
 // Flips the rendering bits for a character at the current cursor position
 static void InvertCharacter(uint8_t *cursor) {
     const uint8_t *end = cursor + OLED_FONT_WIDTH;
@@ -185,6 +188,7 @@ bool oled_init(oled_rotation_t rotation, Oled *oled) {
 #endif
 
     oled_clear(oled);
+    oled_render(oled);
     oled->initialized = true;
     oled->active      = true;
     oled->scrolling   = false;
@@ -194,8 +198,8 @@ bool oled_init(oled_rotation_t rotation, Oled *oled) {
 __attribute__((weak)) oled_rotation_t oled_init_user(oled_rotation_t rotation, Oled *oled) { return rotation; }
 
 void oled_clear(Oled *oled) {
-    memset(oled->buffer, 0, sizeof(oled->buffer));
-    oled->cursor = &(oled->buffer[0]);
+    memset(oled_buffer, 0, sizeof(oled_buffer));
+    oled->cursor = &(oled_buffer[0]);
     oled->dirty  = OLED_ALL_BLOCKS_MASK;
 }
 
@@ -249,61 +253,63 @@ void oled_render(Oled *oled) {
         return;
     }
 
-    // Do we have work to do?
-    oled->dirty &= OLED_ALL_BLOCKS_MASK;
-    if (!oled->dirty || oled->scrolling) {
-        return;
-    }
+    while(oled->dirty & OLED_ALL_BLOCKS_MASK)
+    {
+      // Do we have work to do?
+      oled->dirty &= OLED_ALL_BLOCKS_MASK;
+      if (!oled->dirty || oled->scrolling) {
+          return;
+      }
 
-    // Find first dirty block
-    uint8_t update_start = 0;
-    while (!(oled->dirty & ((OLED_BLOCK_TYPE)1 << update_start))) {
-        ++update_start;
-    }
+      // Find first dirty block
+      uint8_t update_start = 0;
+      while (!(oled->dirty & ((OLED_BLOCK_TYPE)1 << update_start))) {
+          ++update_start;
+      }
 
-    // Set column & page position
-    static uint8_t display_start[] = {I2C_CMD, COLUMN_ADDR, 0, OLED_DISPLAY_WIDTH - 1, PAGE_ADDR, 0, OLED_DISPLAY_HEIGHT / 8 - 1};
-    if (!HAS_FLAGS(oled->rotation, OLED_ROTATION_90)) {
-        calc_bounds(update_start, &display_start[1]);  // Offset from I2C_CMD byte at the start
-    } else {
-        calc_bounds_90(update_start, &display_start[1]);  // Offset from I2C_CMD byte at the start
-    }
+      // Set column & page position
+      static uint8_t display_start[] = {I2C_CMD, COLUMN_ADDR, 0, OLED_DISPLAY_WIDTH - 1, PAGE_ADDR, 0, OLED_DISPLAY_HEIGHT / 8 - 1};
+      if (!HAS_FLAGS(oled->rotation, OLED_ROTATION_90)) {
+          calc_bounds(update_start, &display_start[1]);  // Offset from I2C_CMD byte at the start
+      } else {
+          calc_bounds_90(update_start, &display_start[1]);  // Offset from I2C_CMD byte at the start
+      }
 
-    // Send column & page position
-    if (I2C_TRANSMIT(display_start, oled->address) != I2C_STATUS_SUCCESS) {
-        print("oled_render offset command failed\n");
-        return;
-    }
+      // Send column & page position
+      if (I2C_TRANSMIT(display_start, oled->address) != I2C_STATUS_SUCCESS) {
+          print("oled_render offset command failed\n");
+          return;
+      }
 
-    if (!HAS_FLAGS(oled->rotation, OLED_ROTATION_90)) {
-        // Send render data chunk as is
-        if (I2C_WRITE_REG(I2C_DATA, &(oled->buffer[OLED_BLOCK_SIZE * update_start]), OLED_BLOCK_SIZE, oled->address) != I2C_STATUS_SUCCESS) {
-            print("oled_render data failed\n");
-            return;
-        }
-    } else {
-        // Rotate the render chunks
-        const static uint8_t source_map[] = OLED_SOURCE_MAP;
-        const static uint8_t target_map[] = OLED_TARGET_MAP;
+      if (!HAS_FLAGS(oled->rotation, OLED_ROTATION_90)) {
+          // Send render data chunk as is
+          if (I2C_WRITE_REG(I2C_DATA, &(oled_buffer[OLED_BLOCK_SIZE * update_start]), OLED_BLOCK_SIZE, oled->address) != I2C_STATUS_SUCCESS) {
+              print("oled_render data failed\n");
+              return;
+          }
+      } else {
+          // Rotate the render chunks
+          const static uint8_t source_map[] = OLED_SOURCE_MAP;
+          const static uint8_t target_map[] = OLED_TARGET_MAP;
 
-        static uint8_t temp_buffer[OLED_BLOCK_SIZE];
-        memset(temp_buffer, 0, sizeof(temp_buffer));
-        for (uint8_t i = 0; i < sizeof(source_map); ++i) {
-            rotate_90(&(oled->buffer[OLED_BLOCK_SIZE * update_start + source_map[i]]), &temp_buffer[target_map[i]]);
-        }
+          static uint8_t temp_buffer[OLED_BLOCK_SIZE];
+          memset(temp_buffer, 0, sizeof(temp_buffer));
+          for (uint8_t i = 0; i < sizeof(source_map); ++i) {
+              rotate_90(&(oled_buffer[OLED_BLOCK_SIZE * update_start + source_map[i]]), &temp_buffer[target_map[i]]);
+          }
 
-        // Send render data chunk after rotating
-        if (I2C_WRITE_REG(I2C_DATA, &temp_buffer[0], OLED_BLOCK_SIZE, oled->address) != I2C_STATUS_SUCCESS) {
-            print("oled_render90 data failed\n");
-            return;
-        }
+          // Send render data chunk after rotating
+          if (I2C_WRITE_REG(I2C_DATA, &temp_buffer[0], OLED_BLOCK_SIZE, oled->address) != I2C_STATUS_SUCCESS) {
+              print("oled_render90 data failed\n");
+              return;
+          }
+      }
+      // Clear dirty flag
+      oled->dirty &= ~((OLED_BLOCK_TYPE)1 << update_start);
     }
 
     // Turn on display if it is off
     oled_on(oled);
-
-    // Clear dirty flag
-    oled->dirty &= ~((OLED_BLOCK_TYPE)1 << update_start);
 }
 
 void oled_set_cursor(uint8_t col, uint8_t line, Oled *oled) {
@@ -314,11 +320,11 @@ void oled_set_cursor(uint8_t col, uint8_t line, Oled *oled) {
         index = 0;
     }
 
-    oled->cursor = &(oled->buffer[index]);
+    oled->cursor = &(oled_buffer[index]);
 }
 
 void oled_advance_page(bool clearPageRemainder, Oled *oled) {
-    uint16_t index     = oled->cursor - &(oled->buffer[0]);
+    uint16_t index     = oled->cursor - &(oled_buffer[0]);
     uint8_t  remaining = oled->rotation_width - (index % oled->rotation_width);
 
     if (clearPageRemainder) {
@@ -334,12 +340,12 @@ void oled_advance_page(bool clearPageRemainder, Oled *oled) {
             remaining = 0;
         }
 
-        oled->cursor = &(oled->buffer[index + remaining]);
+        oled->cursor = &(oled_buffer[index + remaining]);
     }
 }
 
 void oled_advance_char(Oled *oled) {
-    uint16_t nextIndex      = oled->cursor - &(oled->buffer[0]) + OLED_FONT_WIDTH;
+    uint16_t nextIndex      = oled->cursor - &(oled_buffer[0]) + OLED_FONT_WIDTH;
     uint8_t  remainingSpace = oled->rotation_width - (nextIndex % oled->rotation_width);
 
     // Do we have enough space on the current line for the next character
@@ -353,7 +359,7 @@ void oled_advance_char(Oled *oled) {
     }
 
     // Update cursor position
-    oled->cursor = &(oled->buffer[nextIndex]);
+    oled->cursor = &(oled_buffer[nextIndex]);
 }
 
 // Main handler that writes character data to the display buffer
@@ -392,7 +398,7 @@ void oled_write_char(const char data, bool invert, Oled *oled) {
 
     // Dirty check
     if (memcmp(&oled_temp_buffer, oled->cursor, OLED_FONT_WIDTH)) {
-        uint16_t index = oled->cursor - &(oled->buffer[0]);
+        uint16_t index = oled->cursor - &(oled_buffer[0]);
         oled->dirty |= ((OLED_BLOCK_TYPE)1 << (index / OLED_BLOCK_SIZE));
         // Edgecase check if the written data spans the 2 chunks
         oled->dirty |= ((OLED_BLOCK_TYPE)1 << ((index + OLED_FONT_WIDTH - 1) / OLED_BLOCK_SIZE));
@@ -421,12 +427,12 @@ void oled_pan(bool left, Oled *oled) {
         if (left) {
             for (uint16_t x = 0; x < OLED_DISPLAY_WIDTH - 1; x++) {
                 i              = y * OLED_DISPLAY_WIDTH + x;
-                oled->buffer[i] = oled->buffer[i + 1];
+                oled_buffer[i] = oled_buffer[i + 1];
             }
         } else {
             for (uint16_t x = OLED_DISPLAY_WIDTH - 1; x > 0; x--) {
                 i              = y * OLED_DISPLAY_WIDTH + x;
-                oled->buffer[i] = oled->buffer[i - 1];
+                oled_buffer[i] = oled_buffer[i - 1];
             }
         }
     }
@@ -436,24 +442,24 @@ void oled_pan(bool left, Oled *oled) {
 oled_buffer_reader_t oled_read_raw(uint16_t start_index, Oled *oled) {
     if (start_index > OLED_MATRIX_SIZE) start_index = OLED_MATRIX_SIZE;
     oled_buffer_reader_t ret_reader;
-    ret_reader.current_element         = &(oled->buffer[start_index]);
+    ret_reader.current_element         = &(oled_buffer[start_index]);
     ret_reader.remaining_element_count = OLED_MATRIX_SIZE - start_index;
     return ret_reader;
 }
 
 void oled_write_raw_byte(const char data, uint16_t index, Oled *oled) {
     if (index > OLED_MATRIX_SIZE) index = OLED_MATRIX_SIZE;
-    if (oled->buffer[index] == data) return;
-    oled->buffer[index] = data;
+    if (oled_buffer[index] == data) return;
+    oled_buffer[index] = data;
     oled->dirty |= ((OLED_BLOCK_TYPE)1 << (index / OLED_BLOCK_SIZE));
 }
 
 void oled_write_raw(const char *data, uint16_t size, Oled *oled) {
-    uint16_t cursor_start_index = oled->cursor - &(oled->buffer[0]);
+    uint16_t cursor_start_index = oled->cursor - &(oled_buffer[0]);
     if ((size + cursor_start_index) > OLED_MATRIX_SIZE) size = OLED_MATRIX_SIZE - cursor_start_index;
     for (uint16_t i = cursor_start_index; i < cursor_start_index + size; i++) {
-        if (oled->buffer[i] == data[i]) continue;
-        oled->buffer[i] = data[i];
+        if (oled_buffer[i] == data[i]) continue;
+        oled_buffer[i] = data[i];
         oled->dirty |= ((OLED_BLOCK_TYPE)1 << (i / OLED_BLOCK_SIZE));
     }
 }
@@ -466,14 +472,14 @@ void oled_write_pixel(uint8_t x, uint8_t y, bool on, Oled *oled) {
     if (index >= OLED_MATRIX_SIZE) {
         return;
     }
-    uint8_t data = oled->buffer[index];
+    uint8_t data = oled_buffer[index];
     if (on) {
         data |= (1 << (y % 8));
     } else {
         data &= ~(1 << (y % 8));
     }
-    if (oled->buffer[index] != data) {
-        oled->buffer[index] = data;
+    if (oled_buffer[index] != data) {
+        oled_buffer[index] = data;
         oled->dirty |= ((OLED_BLOCK_TYPE)1 << (index / OLED_BLOCK_SIZE));
     }
 }
@@ -493,12 +499,12 @@ void oled_write_ln_P(const char *data, bool invert, Oled *oled) {
 }
 
 void oled_write_raw_P(const char *data, uint16_t size, Oled *oled) {
-    uint16_t cursor_start_index = oled_cursor - &oled_buffer[0];
+    uint16_t cursor_start_index = oled->cursor - &(oled_buffer[0]);
     if ((size + cursor_start_index) > OLED_MATRIX_SIZE) size = OLED_MATRIX_SIZE - cursor_start_index;
     for (uint16_t i = cursor_start_index; i < cursor_start_index + size; i++) {
         uint8_t c = pgm_read_byte(data++);
-        if (oled->buffer[i] == c) continue;
-        oled->buffer[i] = c;
+        if (oled_buffer[i] == c) continue;
+        oled_buffer[i] = c;
         oled->dirty |= ((OLED_BLOCK_TYPE)1 << (i / OLED_BLOCK_SIZE));
     }
 }
@@ -657,11 +663,13 @@ void oled_task(Oled *oled) {
         return;
     }
 
+    oled_clear(oled);
+
 #if OLED_UPDATE_INTERVAL > 0
     if (timer_elapsed(oled_update_timeout) >= OLED_UPDATE_INTERVAL) {
         oled_update_timeout = timer_read();
         oled_set_cursor(0, 0);
-        oled_task_user();
+        oled_task_user(oled);
     }
 #else
     oled_set_cursor(0, 0, oled);

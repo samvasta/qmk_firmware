@@ -96,6 +96,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef DIP_SWITCH_ENABLE
 #    include "dip_switch.h"
 #endif
+#ifndef OLED_FRAME_SKIP
+#     define OLED_FRAME_SKIP 20
+#endif
+
 
 static uint32_t last_input_modification_time = 0;
 uint32_t        last_input_activity_time(void) { return last_input_modification_time; }
@@ -347,6 +351,14 @@ void switch_events(uint8_t row, uint8_t col, bool pressed) {
 #endif
 }
 
+#ifdef OLED_DRIVER_ENABLE
+static uint16_t frame_counter = 0;
+uint16_t get_oled_frame_count(void) {
+  return frame_counter;
+}
+#endif
+
+
 /** \brief Keyboard task: Do keyboard routine jobs
  *
  * Do routine keyboard jobs:
@@ -446,18 +458,21 @@ MATRIX_LOOP_END:
 #endif
 
 #ifdef OLED_DRIVER_ENABLE
+    ++frame_counter;
 
-    for(int i = 0; i < NUM_OLEDS; i++){
-      Oled *oled = &Oleds[i];
-      oled_task(oled);
+    if(frame_counter > OLED_FRAME_SKIP * NUM_OLEDS*2) {
+      frame_counter = 0;
     }
+
+    if(frame_counter % OLED_FRAME_SKIP == 0) {
+      Oled *oled = &Oleds[(frame_counter / OLED_FRAME_SKIP) % NUM_OLEDS];
+      oled_task(oled);
 #    ifndef OLED_DISABLE_TIMEOUT
     // Wake up oled if user is using those fabulous keys!
-    for(int i = 0; i < NUM_OLEDS; i++){
 #        ifdef ENCODER_ENABLE
-      if (matrix_changed || encoders_changed) oled_on(&Oleds[i]);
+      if (matrix_changed || encoders_changed) { oled_on(oled); }
 #        else
-      if (matrix_changed) oled_on(&Oleds[i]);
+      if (matrix_changed) { oled_on(oled); }
 #        endif
 #    endif
     }

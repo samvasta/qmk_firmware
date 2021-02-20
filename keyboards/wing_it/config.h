@@ -34,8 +34,9 @@
 
 #define USB_MAX_POWER_CONSUMPTION 500
 
-#define NUM_OLEDS 1
+#define NUM_OLEDS 2
 #define OLED_DISPLAY_128X64
+#define OLED_FRAME_SKIP 10
 
 /*
  * Feature disable options

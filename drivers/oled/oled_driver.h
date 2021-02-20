@@ -177,7 +177,6 @@ typedef enum {
 
 typedef struct Oled {
   uint8_t         address;
-  uint8_t         buffer[OLED_MATRIX_SIZE];
   uint8_t *       cursor;
   OLED_BLOCK_TYPE dirty;
   bool            initialized;

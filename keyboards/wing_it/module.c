@@ -133,8 +133,7 @@ matrix_row_t module_read_cols(Module *module){
   // Read value of all 8 pins of port B
   expander_read(module, EXPANDER_REG_GPIOB, &data);
 
-  // mask with 0b01111111 because wing_it doesn't use the last column
-  return data & 0b01111111;
+  return data;
 }
 
 void module_unselect_rows(Module *module){

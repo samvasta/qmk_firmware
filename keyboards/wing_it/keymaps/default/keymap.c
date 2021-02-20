@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "matrix.h"
+#include "keyboard.h"
 
 #define ______ KC_TRNS
 
@@ -431,160 +432,121 @@ uint8_t matrix_key_count(void)
   return count;
 }
 
-//QUICK HACK
-void keyboard_post_init_user(void) {
 
-  // Oled oled2 = {
-  //   .address = 0x3D,
-  //   .dirty          = 0,
-  //   .initialized    = false,
-  //   .active         = false,
-  //   .scrolling      = false,
-  //   .brightness     = OLED_BRIGHTNESS,
-  //   .rotation       = 0,
-  //   .rotation_width = 0,
-  //   .scroll_speed   = 0,  // this holds the speed after being remapped to ssd1306 internal values
-  //   .scroll_start   = 0,
-  //   .scroll_end     = 7
-  // };
-  // oled_init(0, &oled2);
+char buffer[10];
+uint8_t num_times_drawn = 0;
+void oled_task_left(Oled *oled) {
+  ++num_times_drawn;
+
+  memset(buffer, 0, sizeof(buffer));
+  sprintf(buffer, "%d (%d)", get_oled_frame_count() / OLED_FRAME_SKIP, num_times_drawn);
+  oled_write_ln(buffer, false, oled);
+
+  uint8_t row = last_pos.row;
+  uint8_t col = last_pos.col;
+
+  // clear buffer
+  memset(buffer, 0, sizeof(buffer));
+
+  sprintf(buffer, "%02d,%02d%c (%02d) %02d", row, col, has_pressed? '!' : '?', last_keycode_count, matrix_key_count());
+
+  oled_write_ln_P(PSTR("Last key: "), false, oled);
+  oled_write_ln(buffer, false, oled);
+
+
+
+  for(uint8_t r = 0; r < MATRIX_ROWS; ++r)
+  {
+    matrix_row_t row = matrix_get_row(r);
+    for(uint8_t c = 0; c < MATRIX_COLS; ++c)
+    {
+      uint8_t on = row & (1 << c);
+      uint8_t center_x = c*4+1;
+      uint8_t center_y = r*4+1 + 32;
+
+        //Key Indicator
+        oled_write_pixel(center_x, center_y, on, oled);
+        oled_write_pixel(center_x+1, center_y, on, oled);
+        oled_write_pixel(center_x, center_y+1, on, oled);
+        oled_write_pixel(center_x+1, center_y+1, on, oled);
+
+
+        // Outline
+        //  left edge
+        oled_write_pixel(center_x-1, center_y-1, true, oled);
+        oled_write_pixel(center_x-1, center_y, true, oled);
+        oled_write_pixel(center_x-1, center_y+1, true, oled);
+        oled_write_pixel(center_x-1, center_y+2, true, oled);
+
+        // top edge
+        oled_write_pixel(center_x, center_y-1, true, oled);
+        oled_write_pixel(center_x+1, center_y-1, true, oled);
+
+        // bottom edge
+        oled_write_pixel(center_x, center_y+2, on, oled);
+        oled_write_pixel(center_x+1, center_y+2, on, oled);
+
+        // right edge
+        oled_write_pixel(center_x+2, center_y-1, true, oled);
+        oled_write_pixel(center_x+2, center_y, on, oled);
+        oled_write_pixel(center_x+2, center_y+1, on, oled);
+        oled_write_pixel(center_x+2, center_y+2, on, oled);
+    }
+  }
 }
 
-bool keyboard_drawn = 0;
-char buffer[10];
-uint8_t count = 0;
+void oled_task_right(Oled *oled) {
+  oled_write_ln_P(PSTR("0x3D!"), false, oled);
+
+  memset(buffer, 0, sizeof(buffer));
+  sprintf(buffer, "%d", get_oled_frame_count()/OLED_FRAME_SKIP);
+  oled_write_ln(buffer, false, oled);
+
+  for(uint8_t i = 0; i < NUM_MODULES; i++) {
+    Module module = modules[i];
+
+    oled_write_char(i+48, false, oled);
+
+    uint8_t ret = i2c_start(module.address | I2C_WRITE, I2C_TIMEOUT);
+    if(ret == 0){
+      i2c_stop();
+      oled_write_ln_P(PSTR(" connected"), false, oled);
+    }
+    else {
+      oled_write_ln_P(PSTR(" disconnected"), false, oled);
+    }
+  }
+
+
+  for(uint8_t r = 0; r < MATRIX_ROWS; ++r)
+  {
+    matrix_row_t row = matrix_get_row(r);
+    sprintf(buffer, "%x; ", bitpop(row));
+    oled_write(buffer, false, oled);
+  }
+  // Host Keyboard LED Status
+  led_t led_state = host_keyboard_led_state();
+  oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false, oled);
+  oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false, oled);
+  oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false, oled);
+}
+
 void oled_task_user(Oled *oled) {
-    ++count;
-    if(count > 999) {
-      count = 0;
-    }
-
-
-    if(count % 100 != 0) {
+  switch(oled->address) {
+    case 0x3C:
+      oled_task_left(oled);
       return;
-    }
-
-    // if(count % 20 == 0) {
-    //   oled->address = 0x3C;
-    // }
-    // else {
-    //   oled->address = 0x3D;
-    // }
-
-  // oled_on(oled);
-
-  if(oled->address == 0x3C && count % 200 == 0) {
-    // Host Keyboard Layer Status
-    oled_write_ln_P(PSTR("0x3C!"), false, oled);
-
-    oled_write_char(48+(count/10), false, oled);
-    oled_write_ln_P(PSTR(""), false, oled);
-
-    uint8_t row = last_pos.row;
-    uint8_t col = last_pos.col;
-
-    // clear buffer
-    memset(buffer, 0, sizeof(buffer));
-
-    sprintf(buffer, "%02d,%02d%c (%02d) %02d", row, col, has_pressed? '!' : '?', last_keycode_count, matrix_key_count());
-
-    oled_write_ln_P(PSTR("Last key: "), false, oled);
-    oled_write_ln(buffer, false, oled);
-
-
-
-    for(uint8_t r = 0; r < MATRIX_ROWS; ++r)
-    {
-      matrix_row_t row = matrix_get_row(r);
-      for(uint8_t c = 0; c < MATRIX_COLS; ++c)
-      {
-        uint8_t on = row & (1 << c);
-        uint8_t center_x = c*4+1;
-        uint8_t center_y = r*4+1 + 32;
-
-        // if(on) {
-        //   sprintf(buffer, " %d,%d;", r, c);
-        //   oled_write(buffer, false, oled);
-        // }
-
-        // if(on)
-        // {
-          oled_write_pixel(center_x, center_y, on, oled);
-          oled_write_pixel(center_x+1, center_y, on, oled);
-          oled_write_pixel(center_x, center_y+1, on, oled);
-          oled_write_pixel(center_x+1, center_y+1, on, oled);
-
-
-          oled_write_pixel(center_x+2, center_y, on, oled);
-          oled_write_pixel(center_x+2, center_y+1, on, oled);
-          oled_write_pixel(center_x+2, center_y+2, on, oled);
-          oled_write_pixel(center_x, center_y+2, on, oled);
-          oled_write_pixel(center_x+1, center_y+2, on, oled);
-        // }
-
-        // if(!keyboard_drawn) {
-          oled_write_pixel(center_x-1, center_y-1, true, oled);
-          oled_write_pixel(center_x-1, center_y, true, oled);
-          oled_write_pixel(center_x-1, center_y+1, true, oled);
-          oled_write_pixel(center_x-1, center_y+2, true, oled);
-
-          oled_write_pixel(center_x+2, center_y-1, true, oled);
-          // oled_write_pixel(center_x+2, center_y, true, oled);
-          // oled_write_pixel(center_x+2, center_y+1, true, oled);
-          // oled_write_pixel(center_x+2, center_y+2, true, oled);
-
-          oled_write_pixel(center_x, center_y-1, true, oled);
-          oled_write_pixel(center_x+1, center_y-1, true, oled);
-          // oled_write_pixel(center_x, center_y+2, true, oled);
-          // oled_write_pixel(center_x+1, center_y+2, true, oled);
-        // }
-      }
-    }
-    keyboard_drawn = 1;
-    // oled_task_user(&oled2);
+    case 0x3D:
+      oled_task_right(oled);
+      return;
   }
-  else if(oled->address == 0x3D && count % 200 != 0) {
-    // Host Keyboard Layer Status
-    oled_write_ln_P(PSTR("0x3D!"), false, oled);
-    oled_write_char(48+(count/10), false, oled);
-    oled_write_ln_P(PSTR(""), false, oled);
-    for(uint8_t i = 0; i < NUM_MODULES; i++) {
-      Module module = modules[i];
-
-      oled_write_char(i+48, false, oled);
-
-      uint8_t ret = i2c_start(module.address | I2C_WRITE, I2C_TIMEOUT);
-      if(ret == 0){
-        i2c_stop();
-        oled_write_ln_P(PSTR(" connected"), false, oled);
-      }
-      else {
-        oled_write_ln_P(PSTR(" disconnected"), false, oled);
-      }
-    }
-
-
-    for(uint8_t r = 0; r < MATRIX_ROWS; ++r)
-    {
-      matrix_row_t row = matrix_get_row(r);
-      sprintf(buffer, "%x; ", bitpop(row));
-      oled_write(buffer, false, oled);
-    }
-
-  }
-
-    // // Host Keyboard LED Status
-    // led_t led_state = host_keyboard_led_state();
-    // oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false, oled);
-    // oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false, oled);
-    // oled_write_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false, oled);
 }
 
 
 Oled Oleds[NUM_OLEDS] = {
   {
-    .address = 0x3C,
-    .dirty          = 0,
+    .address = 0x3D,
+    // .dirty          = 0,
     .initialized    = false,
     .active         = false,
     .scrolling      = false,
@@ -595,17 +557,17 @@ Oled Oleds[NUM_OLEDS] = {
     .scroll_start   = 0,
     .scroll_end     = 7
   },
-  // {
-  //   .address = 0x3D,
-  //   .dirty          = 0,
-  //   .initialized    = false,
-  //   .active         = false,
-  //   .scrolling      = false,
-  //   .brightness     = OLED_BRIGHTNESS,
-  //   .rotation       = 0,
-  //   .rotation_width = 0,
-  //   .scroll_speed   = 0,  // this holds the speed after being remapped to ssd1306 internal values
-  //   .scroll_start   = 0,
-  //   .scroll_end     = 7
-  // }
+  {
+    .address = 0x3C,
+    // .dirty          = 0,
+    .initialized    = false,
+    .active         = false,
+    .scrolling      = false,
+    .brightness     = OLED_BRIGHTNESS,
+    .rotation       = 0,
+    .rotation_width = 0,
+    .scroll_speed   = 0,  // this holds the speed after being remapped to ssd1306 internal values
+    .scroll_start   = 0,
+    .scroll_end     = 7
+  }
 };

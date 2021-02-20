@@ -84,6 +84,10 @@ uint32_t last_encoder_activity_elapsed(void);  // Number of milliseconds since t
 
 uint32_t get_matrix_scan_rate(void);
 
+#ifdef OLED_DRIVER_ENABLE
+uint16_t get_oled_frame_count(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
