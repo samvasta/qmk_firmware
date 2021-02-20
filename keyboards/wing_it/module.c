@@ -16,14 +16,14 @@ void expander_config(Module *module)
   // We want port B to use the opposite state because we treat switches as active low signals
   // but when the switch is pressed we want to represent it in software as a logical 1
   expander_write(module, EXPANDER_REG_IPOLB, 0xFF);
-  expander_write(module, EXPANDER_REG_IPOLA, 0xFF);
+  expander_write(module, EXPANDER_REG_IPOLA, 0x00);
 
   // Activate all pull-up resistors for both ports
   // PU<7:0> Controls the weak pull-up resistors on each pin (when configured as an input)
   // 1 = Pull-up enabled
   // 0 = Pull-up disabled
   expander_write(module, EXPANDER_REG_GPPUB, 0xFF);
-  expander_write(module, EXPANDER_REG_GPPUA, 0xFF);
+  expander_write(module, EXPANDER_REG_GPPUA, 0x00);
 
   // Set the I/O direction to Input
   // 1 = Pin is configured as an input.
@@ -54,7 +54,7 @@ uint8_t expander_write(Module *module, uint8_t reg, uint8_t data)
 
  stop:
   i2c_stop();
-  wait_us(30);
+  wait_us(100);
   return ret;
 }
 
@@ -125,7 +125,9 @@ matrix_row_t module_read_cols(Module *module){
   matrix_row_t data = 0;
   // Read value of all 8 pins of port B
   expander_read(module, EXPANDER_REG_GPIOB, &data);
-  return data;
+
+  // mask with 0b01111111 because wing_it doesn't use the last column
+  return data & 0b01111111;
 }
 
 void module_unselect_rows(Module *module){

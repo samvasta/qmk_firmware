@@ -40,7 +40,6 @@ static matrix_row_t matrix[MATRIX_ROWS];
 static uint8_t debounce_matrix[MATRIX_ROWS * MATRIX_COLS];
 
 // static matrix_row_t read_cols(uint8_t row);
-static void init_cols(void);
 static void unselect_rows(void);
 // static void select_row(uint8_t row);
 static void scan_modules(void);
@@ -75,29 +74,8 @@ uint8_t matrix_cols(void)
 
 void matrix_init(void)
 {
-  // setPinOutput(D6);
-  // setPinOutput(LED);
   scan_modules();
   unselect_rows();
-  init_cols();
-
-
-  for(uint8_t i = 0; i < NUM_MODULES; i++){
-    module_init(&modules[i]);
-    if(i % 2 == 0){
-      writePinHigh(LED);
-    }
-    else {
-      writePinLow(LED);
-    }
-  }
-  // if((&modules[0])->status){
-  //   writePinHigh(D6);
-  // }
-  // else{
-  //   writePinLow(D6);
-  // }
-  writePinHigh(LED);
 
   // initialize matrix state: all keys off
   for (uint8_t i=0; i < MATRIX_ROWS; i++) {
@@ -112,8 +90,8 @@ void matrix_init(void)
 }
 
 void matrix_power_up(void) {
+  scan_modules();
   unselect_rows();
-  init_cols();
 
   // initialize matrix state: all keys off
   for (uint8_t i=0; i < MATRIX_ROWS; i++) {
@@ -160,11 +138,6 @@ void debounce_report(matrix_row_t change, uint8_t row) {
 
 uint8_t matrix_scan(void)
 {
-  // writePinLow(LED);
-  // pulseLed(2);
-  // writePinHigh(LED);
-  // wait_us(500000); //Wait 1/2 sec.
-
   clear_keyboard();
 
   uint8_t row = 0;
@@ -185,31 +158,18 @@ uint8_t matrix_scan(void)
       // wait_us(30);
 
       // Seems like a hardware issue?
-      if(module_idx == 0) {
-        read = ~read;
-      }
+      // if(module_idx == 0) {
+      //   read = ~read;
+      // }
       cols |= (read & mask);
       debounce_report(cols ^ matrix[row], row);
       matrix[row] = cols;
 
       ++row;
     }
-
-    // module_unselect_rows(module);
   }
 
   matrix_scan_quantum();
-
-  // pulseLed(5);
-  // wait_us(5000); //Wait 1/2 sec.
-
-  // ++counter;
-  // if(counter & 0b10) {
-  //   writePinHigh(LED);
-  // }
-  // else{
-  //   writePinLow(LED);
-  // }
 
   return 1;
 }
@@ -240,16 +200,9 @@ uint8_t matrix_key_count(void)
 {
   uint8_t count = 0;
   for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-    count += bitpop16(matrix[i]);
+    count += bitpop(matrix[i]);
   }
   return count;
-}
-
-static void  init_cols(void)
-{
-  for(uint8_t i = 0; i < NUM_MODULES; i++){
-    module_init(&modules[i]);
-  }
 }
 
 // static matrix_row_t read_cols(uint8_t row)

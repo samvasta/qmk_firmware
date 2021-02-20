@@ -16,11 +16,12 @@
 #define DIODE_DIRECTION COL2ROW
 
 /* key matrix size */
-#define MATRIX_ROWS 8
-#define MATRIX_COLS 8
-#define NUM_MODULES 2
+#define NUM_MODULES 1
 #define MAX_MODULE_ROWS 4
 #define MAX_MODULE_COLS 8
+
+#define MATRIX_ROWS 4
+#define MATRIX_COLS 8
 
 #define MOUSEKEY_INTERVAL       20
 #define MOUSEKEY_DELAY          0
@@ -29,7 +30,7 @@
 #define MOUSEKEY_WHEEL_DELAY    0
 
 /* Set 0 if debouncing isn't needed */
-#define DEBOUNCE    0
+#define DEBOUNCE 5
 
 #define USB_MAX_POWER_CONSUMPTION 500
 
