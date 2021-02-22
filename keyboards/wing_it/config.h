@@ -13,7 +13,6 @@
 #define PRODUCT         Wing_it!
 #define DESCRIPTION     QMK firmware for the "Wing_it!" keyboard
 
-#define DIODE_DIRECTION COL2ROW
 
 /* key matrix size */
 #define NUM_MODULES 2

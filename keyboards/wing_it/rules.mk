@@ -32,6 +32,7 @@ SWAP_HANDS_ENABLE       = no
 RGBLIGHT_ENABLE         = no
 MIDI_ENABLE             = no
 OLED_DRIVER_ENABLE      = yes
+WPM_ENABLE              = yes
 
 
 # project specific files
