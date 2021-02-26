@@ -183,6 +183,9 @@ bool oled_init(oled_rotation_t rotation, Oled *oled) {
 #if OLED_TIMEOUT > 0
     oled->timeout = timer_read32() + OLED_TIMEOUT;
 #endif
+#if OLED_DIM > 0
+    oled->dim = timer_read32() + OLED_DIM;
+#endif
 #if OLED_SCROLL_TIMEOUT > 0
     oled->scroll_timeout = timer_read32() + OLED_SCROLL_TIMEOUT;
 #endif
@@ -515,6 +518,9 @@ bool oled_on(Oled *oled) {
 #if OLED_TIMEOUT > 0
     oled->timeout = timer_read32() + OLED_TIMEOUT;
 #endif
+#if OLED_DIM > 0
+    oled->dim = timer_read32() + OLED_DIM;
+#endif
 
     static const uint8_t PROGMEM display_on[] = {I2C_CMD, DISPLAY_ON};
     if (!oled->active) {
@@ -687,6 +693,11 @@ void oled_task(Oled *oled) {
 #if OLED_TIMEOUT > 0
     if (oled->active && timer_expired32(timer_read32(), oled->timeout)) {
         oled_off(oled);
+    }
+#endif
+#if OLED_DIM > 0
+    if (oled->active && timer_expired32(timer_read32(), oled->dim)) {
+        oled_set_brightness(1, oled);
     }
 #endif
 

@@ -158,6 +158,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #    endif
 #endif
 
+#if !defined(OLED_DIM)
+#    if defined(OLED_DISABLE_TIMEOUT)
+#        define OLED_DIM 0
+#    else
+#        define OLED_DIM 30000
+#    endif
+#endif
+
 #if !defined(OLED_I2C_TIMEOUT)
 #    define OLED_I2C_TIMEOUT 100
 #endif
@@ -190,6 +198,9 @@ typedef struct Oled {
   uint8_t         scroll_end;
   #if OLED_TIMEOUT > 0
   uint32_t timeout;
+  #endif
+  #if OLED_DIM > 0
+  uint32_t dim;
   #endif
   #if OLED_SCROLL_TIMEOUT > 0
   uint32_t oled_scroll_timeout;

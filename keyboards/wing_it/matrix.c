@@ -131,6 +131,7 @@ uint8_t matrix_scan(void)
   for(uint8_t module_idx = 0; module_idx < NUM_MODULES; ++module_idx)
   {
     Module *module = MODULE_PTR_FROM_ROW(row);
+    module->status -= 1;
     if(!module->status)
     {
       module_scan(module);
@@ -151,7 +152,7 @@ uint8_t matrix_scan(void)
       // wait_us(30);
 
       //Turn on keys that can change and are pressed
-      cols |= (~read & mask);
+      cols |= (read & mask);
       uint8_t row_change = cols ^ matrix[row];
       changed |= row_change;
       debounce_report(row_change, row);

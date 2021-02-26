@@ -465,6 +465,15 @@ MATRIX_LOOP_END:
       frame_counter = 0;
     }
 
+#if OLED_DIM > 0
+    if(matrix_change) {
+      for(uint8_t i = 0; i < NUM_OLEDS; ++i) {
+        (&Oleds[i])->dim = timer_read32() + OLED_DIM;
+        oled_set_brightness(255, &Oleds[i]);
+      }
+    }
+#endif
+
 #if OLED_TIMEOUT > 0
     if(matrix_change) {
       for(uint8_t i = 0; i < NUM_OLEDS; ++i) {

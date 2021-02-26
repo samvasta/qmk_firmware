@@ -107,25 +107,16 @@ void module_init(Module *module){
   module_scan(module);
 }
 
-void module_scan(Module *module){
-
-  dprintf("expander status: %d ... ", module->status);
+void module_scan(Module *module) {
   uint8_t ret = i2c_start(module->address | I2C_WRITE, I2C_TIMEOUT);
   if (ret == 0) {
+    module->status = 100;
+    expander_config(module);
     i2c_stop();
-    if (module->status == 0) {
-      dprintf("attached\n");
-      module->status = 1;
-      expander_config(module);
-    }
   }
   else {
-    if (module->status == 1) {
-      dprintf("detached\n");
-      module->status = 0;
-    }
+    module->status = 0;
   }
-  dprintf("%d\n", module->status);
 }
 
 matrix_row_t module_read_cols(Module *module){
