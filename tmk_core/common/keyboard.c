@@ -465,6 +465,15 @@ MATRIX_LOOP_END:
       frame_counter = 0;
     }
 
+#if OLED_TIMEOUT > 0
+    if(matrix_change) {
+      for(uint8_t i = 0; i < NUM_OLEDS; ++i) {
+        (&Oleds[i])->timeout = timer_read32() + OLED_TIMEOUT;
+        oled_on(&Oleds[i]);
+      }
+    }
+#endif
+
     if(frame_counter % OLED_FRAME_SKIP == 0) {
       Oled *oled = &Oleds[(frame_counter / OLED_FRAME_SKIP) % NUM_OLEDS];
       oled_task(oled);

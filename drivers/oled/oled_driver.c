@@ -307,9 +307,6 @@ void oled_render(Oled *oled) {
       // Clear dirty flag
       oled->dirty &= ~((OLED_BLOCK_TYPE)1 << update_start);
     }
-
-    // Turn on display if it is off
-    oled_on(oled);
 }
 
 void oled_set_cursor(uint8_t col, uint8_t line, Oled *oled) {

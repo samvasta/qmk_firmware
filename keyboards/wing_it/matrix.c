@@ -151,7 +151,7 @@ uint8_t matrix_scan(void)
       // wait_us(30);
 
       //Turn on keys that can change and are pressed
-      cols |= (read & mask);
+      cols |= (~read & mask);
       uint8_t row_change = cols ^ matrix[row];
       changed |= row_change;
       debounce_report(row_change, row);

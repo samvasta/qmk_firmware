@@ -9,6 +9,7 @@
 #include "keyboard.h"
 #include "action_layer.h"
 #include "wpm.h"
+#include "oled_common.h"
 
 #define ______ KC_TRNS
 
@@ -94,8 +95,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	*/
 	[LAYER_2] = LAYOUT(
 		KC_GRV, KC_EXLM, KC_AT ,       KC_HASH,	   KC_DLR,    KC_PERC,                                           KC_CIRC   , KC_AMPR,    KC_ASTR,    KC_LPRN,   KC_RPRN,     KC_BSPC,
-		______, KC_NO  , S(KC_BSLASH), S(KC_UNDS), S(KC_EQL), S(KC_LBRC) ,                                       S(KC_RBRC), S(KC_QUOT), S(KC_COMM), S(KC_DOT), S(KC_SLASH), ______,
-		______, KC_NO  , KC_BSLASH,    KC_UNDS,    KC_EQL,    KC_LBRC ,                                          KC_RBRC   , KC_QUOT ,   KC_COMM,    KC_DOT,    KC_SLASH,    ______,
+		______, KC_NO  , S(KC_BSLASH), S(KC_MINS), S(KC_EQL), S(KC_LBRC) ,                                       S(KC_RBRC), S(KC_QUOT), S(KC_COMM), S(KC_DOT), S(KC_SLASH), ______,
+		______, KC_NO  , KC_BSLASH,    KC_MINS,    KC_EQL,    KC_LBRC ,                                          KC_RBRC   , KC_QUOT ,   KC_COMM,    KC_DOT,    KC_SLASH,    ______,
 		______, ______ , ______,       ______ ,    ______,    ______ ,     ______, ______,     ______,  ______,  ______    , ______ ,    ______ ,    ______ ,   ______ ,     ______
 	),
 
@@ -134,9 +135,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	└────────┴────────┴────────┴────────┴────────┴────────┘  └────────┘└────────┘        └────────┘└────────┘  └────────┴────────┴────────┴────────┴────────┴────────┘
 	*/
 	[LAYER_4] = LAYOUT(
-		______, ______,  KC_NUMLOCK, UNICD,    KC_LALT,    ______,                                                KC_P0,   KC_P1,   KC_P2,   KC_P3,   KC_P4,   KC_P5,
+		______, KC_NO  , KC_NUMLOCK, UNICD,    KC_LALT,    ______,                                                KC_P0,   KC_P1,   KC_P2,   KC_P3,   KC_P4,   KC_P5,
 		______, KC_ASTR, KC_SLASH,   KC_UNDS,  KC_KP_PLUS, KC_PDOT,                                               KC_X,    KC_P6,   KC_P7,   KC_P8,   KC_P9,   S(KC_A),
-		______, ______,  ______,     KC_MINUS, KC_EQL,     ______,                                                KC_HASH, S(KC_B), S(KC_C), S(KC_D), S(KC_E), S(KC_F),
+		______, KC_NO  ,  KC_NO  ,   KC_MINUS, KC_EQL,     ______,                                                KC_HASH, S(KC_B), S(KC_C), S(KC_D), S(KC_E), S(KC_F),
 		______, ______,  ______,     ______,   ______,     ______,   ______, ______,              ______, ______, ______,  ______,  ______,  ______,  ______,  ______
 	),
 
@@ -446,120 +447,14 @@ char get_nice_char(char c){
   return c ? c : '-';
 }
 
-char buffer[10];
-uint8_t num_times_drawn = 0;
-void oled_task_left(Oled *oled) {
-  ++num_times_drawn;
-
-  memset(buffer, 0, sizeof(buffer));
-  sprintf(buffer, "%d (%d)", get_oled_frame_count() / OLED_FRAME_SKIP, num_times_drawn);
-  oled_write_ln(buffer, false, oled);
-
-  uint8_t row = last_pos.row;
-  uint8_t col = last_pos.col;
-
-  // clear buffer
-  memset(buffer, 0, sizeof(buffer));
-
-  sprintf(buffer, "%02d,%02d%c (%02d) %02d", row, col, has_pressed? '!' : '?', last_keycode_count, matrix_key_count());
-
-  oled_write_ln_P(PSTR("Last key: "), false, oled);
-  oled_write_ln(buffer, false, oled);
-
-
-
-  for(uint8_t r = 0; r < MATRIX_ROWS; ++r)
-  {
-    matrix_row_t row = matrix_get_row(r);
-    for(uint8_t c = 0; c < MATRIX_COLS; ++c)
-    {
-      uint8_t on = row & (1 << c);
-      uint8_t center_x = c*4+1;
-      uint8_t center_y = r*4+1 + 32;
-
-        //Key Indicator
-        oled_write_pixel(center_x, center_y, on, oled);
-        oled_write_pixel(center_x+1, center_y, on, oled);
-        oled_write_pixel(center_x, center_y+1, on, oled);
-        oled_write_pixel(center_x+1, center_y+1, on, oled);
-
-
-        // Outline
-        //  left edge
-        oled_write_pixel(center_x-1, center_y-1, true, oled);
-        oled_write_pixel(center_x-1, center_y, true, oled);
-        oled_write_pixel(center_x-1, center_y+1, true, oled);
-        oled_write_pixel(center_x-1, center_y+2, true, oled);
-
-        // top edge
-        oled_write_pixel(center_x, center_y-1, true, oled);
-        oled_write_pixel(center_x+1, center_y-1, true, oled);
-
-        // bottom edge
-        oled_write_pixel(center_x, center_y+2, on, oled);
-        oled_write_pixel(center_x+1, center_y+2, on, oled);
-
-        // right edge
-        oled_write_pixel(center_x+2, center_y-1, true, oled);
-        oled_write_pixel(center_x+2, center_y, on, oled);
-        oled_write_pixel(center_x+2, center_y+1, on, oled);
-        oled_write_pixel(center_x+2, center_y+2, on, oled);
-    }
-  }
-}
-
-void oled_task_right(Oled *oled) {
-  memset(buffer, 0, sizeof(buffer));
-  sprintf(buffer, "%d", get_oled_frame_count()/OLED_FRAME_SKIP);
-  oled_write_ln(buffer, false, oled);
-
-
-  memset(buffer, 0, sizeof(buffer));
-  sprintf(buffer, "Layer %lX", layer_state>>1);
-  oled_write_ln(buffer, false, oled);
-
-
-  for(uint8_t i = 0; i < NUM_MODULES; i++) {
-    Module module = modules[i];
-
-    oled_write_char(i+48, false, oled);
-
-    uint8_t ret = i2c_start(module.address | I2C_WRITE, I2C_TIMEOUT);
-    if(ret == 0){
-      i2c_stop();
-      oled_write_ln_P(PSTR(" connected"), false, oled);
-    }
-    else {
-      oled_write_ln_P(PSTR(" disconnected"), false, oled);
-    }
-  }
-
-  // Host Keyboard LED Status
-  led_t led_state = host_keyboard_led_state();
-  oled_write_P(led_state.num_lock ? PSTR("NUM ") : PSTR("    "), false, oled);
-  oled_write_P(led_state.caps_lock ? PSTR("CAP ") : PSTR("    "), false, oled);
-  oled_write_ln_P(led_state.scroll_lock ? PSTR("SCR ") : PSTR("    "), false, oled);
-
-  memset(buffer, 0, sizeof(buffer));
-  sprintf(buffer, "WPM: %d", get_current_wpm());
-  oled_write_ln(buffer, false, oled);
-
-  if(unicode_active){
-    memset(buffer, 0, sizeof(buffer));
-    sprintf(buffer, "%c%c%c%c", get_nice_char(unicode_buff[0]), get_nice_char(unicode_buff[1]), get_nice_char(unicode_buff[2]), get_nice_char(unicode_buff[3]));
-
-    oled_write_P(PSTR("UNICODE: "), false, oled);
-    oled_write_ln(buffer, false, oled);
-  }
-}
-
 void oled_task_user(Oled *oled) {
+  oled_pre_task();
   switch(oled->address) {
     case 0x3C:
-      oled_task_left(oled);
+      oled_task_right(oled);
       return;
     case 0x3D:
-      oled_task_right(oled);
+      oled_task_left(oled);
       return;
   }
 }

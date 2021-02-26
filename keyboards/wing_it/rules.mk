@@ -38,7 +38,8 @@ WPM_ENABLE              = yes
 # project specific files
 SRC = matrix.c \
 			module.c \
-			i2c_master.c
-	    # twimaster.c \
+			i2c_master.c \
+			oled_common.c \
+			keymaps/default/oled_user.c
 
 LAYOUTS = default

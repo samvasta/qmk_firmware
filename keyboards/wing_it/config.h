@@ -36,6 +36,7 @@
 #define NUM_OLEDS 2
 #define OLED_DISPLAY_128X64
 #define OLED_FRAME_SKIP 10
+#define OLED_TIMEOUT 60000
 
 /*
  * Feature disable options
