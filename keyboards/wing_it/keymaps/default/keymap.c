@@ -442,6 +442,9 @@ uint8_t matrix_key_count(void)
   return count;
 }
 
+void keyboard_pre_init_user(void) {
+  layer_state_set(1);
+}
 
 char get_nice_char(char c){
   return c ? c : '-';

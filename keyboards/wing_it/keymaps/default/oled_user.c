@@ -8,9 +8,9 @@
 #include "progmem.h"
 #include "matrix.h"
 
-#define HEAT_MAP_DECAY_RATE 0.99
-#define HEAT_MAP_ACCUMULATE_RATE 50
-#define HEAT_MAP_STEP 42
+#define HEAT_MAP_ACCUMULATE_RATE 1<<8
+#define HEAT_MAP_MAX_BIT 12
+#define HEAT_MAP_MAX_VALUE 1<<12
 
 const char layer_name[][8] = {
   "ALPHA",
@@ -61,7 +61,34 @@ led_t current_led_state;
 uint8_t active_layer;
 uint8_t wpm_bars;
 uint8_t last_wpm_bars;
-uint8_t key_heat_map[8*6];
+
+typedef uint16_t heat_map_t;
+
+heat_map_t key_heat_map[8*6];
+
+uint8_t get_heat_map_level(heat_map_t heat_map) {
+  uint8_t cur_level = 0;
+  // Hijacking binary encoding to get a logarithmic decay.
+  // All 1's is the lowest level, All 0's is the highest.
+  // Current level is the number of leading 0's
+  // So to get to the next level you need 2x the heat as the previous level
+
+  // Max level is 6
+  while(cur_level < 6 && !(heat_map>>(HEAT_MAP_MAX_BIT-cur_level))){
+    ++cur_level;
+  }
+  return cur_level;
+}
+
+
+oled_rotation_t oled_init_user(oled_rotation_t rotation, Oled *oled) {
+  // memset(key_heat_map, (heat_map_t)HEAT_MAP_MAX_VALUE, 8*6*sizeof(heat_map_t));
+  for(uint8_t i = 0; i < 8*6; i++){
+    key_heat_map[i] = HEAT_MAP_MAX_VALUE;
+  }
+  active_layer = 0;
+  return rotation;
+}
 
 void oled_pre_task(void) {
   // Update function layer states
@@ -107,17 +134,18 @@ void oled_pre_task(void) {
   for(uint8_t row = 0; row < MATRIX_ROWS; ++row) {
     matrix_row_t row_state = matrix_get_row(row);
     for(uint8_t col = 0; col < 6; ++col) {
-      uint8_t *data = &key_heat_map[row*6+col];
+      heat_map_t *data = &key_heat_map[row*6+col];
       if(row_state & (1<<col)) {
-        if(*data < 255-HEAT_MAP_ACCUMULATE_RATE){
-          *data += HEAT_MAP_ACCUMULATE_RATE;
+        //Key down
+        if(*data >= HEAT_MAP_ACCUMULATE_RATE){
+          *data -= HEAT_MAP_ACCUMULATE_RATE;
         }
         else {
-          *data = 255;
+          *data = 0;
         }
-      } else if(*data > 0) {
-        // --*data;
-        *data *= HEAT_MAP_DECAY_RATE;
+      } else if(*data < HEAT_MAP_MAX_VALUE) {
+        //Key up
+        ++*data;
       }
     }
   }
@@ -139,7 +167,8 @@ void oled_task_left(Oled *oled) {
 
   for(uint8_t row = 0; row < MAX_MODULE_ROWS; ++row) {
     for(uint8_t col = 0; col < 6; ++col) {
-      fill_switch_grid_cell(oled, LEFT_GRID_X, LEFT_GRID_Y, col, row, key_heat_map[row*6+col] / HEAT_MAP_STEP);
+      uint8_t level = get_heat_map_level(key_heat_map[row*6+col]);
+      fill_switch_grid_cell(oled, LEFT_GRID_X, LEFT_GRID_Y, col, row, level);
     }
   }
 
@@ -188,7 +217,8 @@ void oled_task_right(Oled *oled) {
 
   for(uint8_t row = 0; row < MAX_MODULE_ROWS; ++row) {
     for(uint8_t col = 0; col < 6; ++col) {
-      fill_switch_grid_cell(oled, RIGHT_GRID_X, RIGHT_GRID_Y, 5-col, row, key_heat_map[(row+4)*6+col] / HEAT_MAP_STEP);
+      uint8_t level = get_heat_map_level(key_heat_map[(row+4)*6+col]);
+      fill_switch_grid_cell(oled, RIGHT_GRID_X, RIGHT_GRID_Y, 5-col, row, level);
     }
   }
 
